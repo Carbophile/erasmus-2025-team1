@@ -1,5 +1,4 @@
-
-import { getDB, queryDB, User, getUserById } from "./db";
+import { getDB, getUserById, queryDB, User } from "./db";
 
 export default {
 	async fetch(request, env, _ctx) {
@@ -20,7 +19,7 @@ export default {
 					return new Response("DB Error: " + e.message, { status: 500 });
 				}
 			}
-			
+
 			default:
 				return new Response("Not Found", { status: 404 });
 		}
