@@ -1,0 +1,20 @@
+{
+	"name": "erasmus-2025-team1",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"prepare": "husky",
+		"check": "biome check --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"husky": "^9.1.7",
+		"vitest": "~3.2.0",
+		"wrangler": "^4.40.0"
+	}
+}
