@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS "options" (
 -- Dumping structure for table migrations.users
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" INTEGER NOT NULL,
-	"email" VARCHAR(254) NOT NULL DEFAULT '0',
+	"email" VARCHAR(254) NOT NULL DEFAULT '',
 	"name" VARCHAR(64) NOT NULL DEFAULT '',
 	"password" VARCHAR(256) NOT NULL DEFAULT '',
 	"is_admin" TINYINT NOT NULL,
