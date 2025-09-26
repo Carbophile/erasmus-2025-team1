@@ -1,10 +1,13 @@
-import { User } from "./db/classes";
-import { getDB, queryDB } from "./db/db";
+import { Category, Option, Question, Quiz, Result, User } from "./db/classes";
+import { getDB } from "./db/db";
 
 // This is nowhere near final, just a skeleton to build upon
 export default {
 	async fetch(request, env, _ctx) {
 		const url = new URL(request.url);
+		var return_msg = "DB Test:\n";
+		var wipe_msg = "DB Test:\n";
+
 		switch (url.pathname) {
 			case "/message":
 				return new Response("Hello, World!");
@@ -139,10 +142,7 @@ export default {
 					}
 				} catch (e) {
 					return new Response(`Error: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
+
 			case "/quiz/result": {
 				if (request.method !== "POST") {
 					return new Response("Method Not Allowed", { status: 405 });
