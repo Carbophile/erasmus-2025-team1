@@ -1,110 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>QuizBattle Admin</title>
-		<link rel="stylesheet" href="styleQuizCrud.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-		/>
-	</head>
+<head>
+  <meta charset="UTF-8">
+  <title>QuizBattle Admin</title>
+  <link rel="stylesheet" href="styleQuizCrud.css">
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+  />
+</head>
+<body>
 
-	<body>
-		<aside class="sidebar">
-			<div class="logo">QuizBattle</div>
-			<nav>
-				<a href="/admin/users"
-					><i class="fa-solid fa-users"></i><span>Users</span></a
-				>
-				<a href="/admin/questions" class="active"
-					><i class="fa-solid fa-question"></i><span>Questions</span></a
-				>
-			</nav>
-		</aside>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">QuizBattle</div>
+    <nav>
+      <a href="#"><i class="fa-solid fa-users"></i><span>Users</span></a>
+      <a href="#" class="active"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+    </nav>
+  </aside>
 
-		<div class="main">
-			<header class="topbar">
-				<div class="nav-left">
-					<button class="btn">Home</button>
-					<button class="btn">Leaderboard</button>
-				</div>
-				<div class="search-box">
-					<input type="text" placeholder="Search..." />
-					<i class="fa fa-search"></i>
-				</div>
-				<div class="nav-right">
-					<i class="fa-solid fa-user user-icon"></i>
-				</div>
-			</header>
+  <!-- Main -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="nav-left">
+        <button class="btn">Home</button>
+        <button class="btn">Leaderboard</button>
+      </div>
+      <div class="nav-right">
+        <div class="search-box">
+          <input type="text" placeholder="Search...">
+          <i class="fa fa-search"></i>
+        </div>
+        <i class="fa-solid fa-user user-icon"></i>
+      </div>
+    </header>
 
-			<section class="table-section">
-				<div class="table-header">
-					<h2>Questions</h2>
-					<button class="btn add-btn"><i class="fa fa-plus"></i> Add</button>
-				</div>
+    <!-- Table Section -->
+    <section class="table-section">
+      <div class="table-header">
+        <h2>Questions</h2>
+        <button class="btn add-btn"><i class="fa fa-plus"></i> Add</button>
+      </div>
 
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Id</th>
-								<th>Question</th>
-								<th>Options</th>
-								<th>Category</th>
-								<th>Country</th>
-								<th>Quiz Id</th>
-								<th>Edit</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>1</td>
-								<td>What is the capital of the Netherlands?</td>
-								<td><button class="btn small">Show</button></td>
-								<td>Culture</td>
-								<td>NL</td>
-								<td>1</td>
-								<td>
-									<button class="icon-btn"><i class="fa fa-pen"></i></button>
-								</td>
-								<td>
-									<button class="icon-btn danger">
-										<i class="fa fa-trash"></i>
-									</button>
-								</td>
-							</tr>
-							<tr>
-								<td>2</td>
-								<td>What is the capital of Croatia?</td>
-								<td><button class="btn small">Show</button></td>
-								<td>Culture</td>
-								<td>HR</td>
-								<td>1</td>
-								<td>
-									<button class="icon-btn"><i class="fa fa-pen"></i></button>
-								</td>
-								<td>
-									<button class="icon-btn danger">
-										<i class="fa fa-trash"></i>
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Question</th>
+              <th>Options</th>
+              <th>Category</th>
+              <th>Country</th>
+              <th>Quiz Id</th>
+              <th>Edit</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>What is the capital of the Netherlands?</td>
+              <td><button class="btn small">Show</button></td>
+              <td>Culture</td>
+              <td>NL</td>
+              <td>1</td>
+              <td><button class="icon-btn"><i class="fa fa-pen"></i></button></td>
+              <td><button class="icon-btn danger"><i class="fa fa-trash"></i></button></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>What is the capital of Croatia?</td>
+              <td><button class="btn small">Show</button></td>
+              <td>Culture</td>
+              <td>HR</td>
+              <td>1</td>
+              <td><button class="icon-btn"><i class="fa fa-pen"></i></button></td>
+              <td><button class="icon-btn danger"><i class="fa fa-trash"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-				<div class="pagination">
-					<button>&laquo;</button>
-					<button>&lsaquo;</button>
-					<button class="active">1</button>
-					<button>2</button>
-					<button>3</button>
-					<button>&rsaquo;</button>
-					<button>&raquo;</button>
-				</div>
-			</section>
-		</div>
-	</body>
+      <!-- Pagination -->
+      <div class="pagination">
+        <button>&laquo;</button>
+        <button>&lsaquo;</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>&rsaquo;</button>
+        <button>&raquo;</button>
+      </div>
+    </section>
+  </div>
+
+</body>
 </html>
