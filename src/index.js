@@ -1,4 +1,4 @@
-import { getDB, getUserById, queryDB, User } from "./db";
+import { getDB, queryDB } from "./db";
 
 export default {
 	async fetch(request, env, _ctx) {
