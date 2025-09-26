@@ -10,7 +10,7 @@ export class User {
 		email,
 		name,
 		password,
-        total_score,
+		total_score,
 		is_admin,
 		create_date,
 		update_date,
@@ -19,7 +19,7 @@ export class User {
 		this.email = email;
 		this.name = name;
 		this.password = password;
-        this.total_score = this.getTotalScore(db, id);
+		this.total_score = this.getTotalScore(db, id);
 		this.is_admin = is_admin;
 		this.create_date = create_date;
 		this.update_date = update_date;
@@ -45,15 +45,15 @@ export class User {
 		return false;
 	}
 
-    async getTotalScore(db, user_id) {
-        const sql = `SELECT SUM(score) as total_score FROM results WHERE user_id = ?`;
-        const result = await queryDB(db, sql, [user_id]);
-        if (result && result.results && result.results.length > 0) {
-            this.total_score = result.results[0].total_score || 0;
-            return this.total_score;
-        }
-        return 0;
-    }
+	async getTotalScore(db, user_id) {
+		const sql = `SELECT SUM(score) as total_score FROM results WHERE user_id = ?`;
+		const result = await queryDB(db, sql, [user_id]);
+		if (result && result.results && result.results.length > 0) {
+			this.total_score = result.results[0].total_score || 0;
+			return this.total_score;
+		}
+		return 0;
+	}
 
 	async create(db) {
 		if (this.password && !this.password.startsWith("$2")) {
@@ -114,7 +114,7 @@ export class Quiz {
 		return false;
 	}
 
-    async loadAll(db) {
+	async loadAll(db) {
 		const sql = `SELECT * FROM quizes`;
 		const result = await queryDB(db, sql, [id]);
 		if (result && result.results && result.results.length > 0) {
