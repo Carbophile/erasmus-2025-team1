@@ -1,5 +1,4 @@
-import { User } from "./db/classes";
-import { getDB } from "./db/db";
+import { getDB, queryDB } from "./db/db";
 
 export default {
 	async fetch(request, env, _ctx) {
@@ -9,41 +8,44 @@ export default {
 				return new Response("Hello, World!");
 			case "/random":
 				return new Response(crypto.randomUUID());
-
-			//test cases to show teacher our db wrapper is working, can be removed later
-			case "/test-get-user": {
+			case "/db-test": {
 				try {
 					const db = getDB(env);
-					const user = new User();
-					await user.load(db, 1);
-					console.log(user);
+					const result = await queryDB(db, "SELECT 1 as test");
+					return new Response(JSON.stringify(result), {
+						headers: { "Content-Type": "application/json" },
+					});
+				} catch (e) {
+					return new Response(`DB Error: ${e.message}`, { status: 500 });
+				}
+			}
 
-					if (user) {
-						return new Response(`User found: ${user.email}`);
+			case "/user/new": {
+				if (request.method !== "POST") {
+					return new Response("Method Not Allowed", { status: 405 });
+				}
+				try {
+					const db = getDB(env);
+					const { User } = await import("./db/classes.js");
+					const data = await request.json();
+					const user = new User(data);
+					const result = await user.create(db);
+					if (result.success) {
+						return new Response(
+							JSON.stringify({ success: true, user_id: user.id }),
+							{ headers: { "Content-Type": "application/json" } },
+						);
 					} else {
-						return new Response("User not found", { status: 404 });
+						return new Response(
+							JSON.stringify({ success: false, error: "User creation failed" }),
+							{ headers: { "Content-Type": "application/json" }, status: 500 },
+						);
 					}
 				} catch (e) {
-					return new Response(`${e.message}`, { status: 500 });
+					return new Response(`Error: ${e.message}`, { status: 500 });
 				}
 			}
-			case "/test-create-user": {
-				try {
-					const db = getDB(env);
-					console.log(db);
-					console.log("Creating user...");
-					const newUser = new User({
-						email: "bV5yaKxsxxs@example.com",
-						name: "Test User",
-						password: "password",
-					});
-					await newUser.create(db);
 
-					return new Response(`User created with ID: ${newUser.id}`);
-				} catch (e) {
-					return new Response(`${e.message}`, { status: 500 });
-				}
-			}
 			default:
 				return new Response("Not Found", { status: 404 });
 		}
