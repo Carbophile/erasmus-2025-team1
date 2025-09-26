@@ -25,6 +25,33 @@ export class User {
 		}
 		return false;
 	}
+	async loadAll(db) {
+		const sql = `SELECT * FROM users`;
+		const result = await queryDB(db, sql, []);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new User(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
+	async loadLeaderboard(db, limit = null) {
+		var sql = `SELECT id, email, name, SUM(results.score) as total_score FROM users INNER JOIN results ON users.id = results.user_id GROUP BY users.id ORDER BY total_score DESC`;
+		var result;
+		if (limit) {
+			sql += ` LIMIT ?`;
+			result = await queryDB(db, sql, [limit]);
+		} else {
+			result = await queryDB(db, sql, []);
+		}
+
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new User(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
 
 	async loadByEmail(db, email) {
 		const sql = `SELECT * FROM users WHERE email = ?`;
@@ -108,12 +135,13 @@ export class Quiz {
 
 	async loadAll(db) {
 		const sql = `SELECT * FROM quizes`;
-		const result = await queryDB(db, sql, [id]);
+		const result = await queryDB(db, sql, []);
 		if (result?.results && result.results.length > 0) {
-			Object.assign(this, result.results);
-			return true;
+			this.items = result.results.map((row) => new Quiz(row));
+			return this.items;
 		}
-		return false;
+		this.items = [];
+		return [];
 	}
 
 	async create(db) {
@@ -172,15 +200,36 @@ export class Question {
 		}
 		return false;
 	}
+	async loadAll(db) {
+		const sql = `SELECT * FROM questions`;
+		const result = await queryDB(db, sql, []);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new User(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
 
 	async loadFromCategory(db, category_id) {
 		const sql = `SELECT * FROM questions WHERE category_id = ?`;
 		const result = await queryDB(db, sql, [category_id]);
 		if (result?.results && result.results.length > 0) {
-			Object.assign(this.result.results);
-			return true;
+			this.items = result.results.map((row) => new Question(row));
+			return this.items;
 		}
-		return false;
+		this.items = [];
+		return [];
+	}
+	async loadFromQuiz(db, quiz_id) {
+		const sql = `SELECT * FROM questions WHERE quiz_id = ?`;
+		const result = await queryDB(db, sql, [quiz_id]);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new Question(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
 	}
 
 	async create(db) {
@@ -238,7 +287,16 @@ export class Category {
 		}
 		return false;
 	}
-
+	async loadAll(db) {
+		const sql = `SELECT * FROM categories`;
+		const result = await queryDB(db, sql, []);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new Category(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
 	async create(db) {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO categories (name, create_date, update_date) VALUES (?, ?, ?)`;
@@ -281,14 +339,26 @@ export class Option {
 		return false;
 	}
 
+	async loadAll(db) {
+		const sql = `SELECT * FROM options`;
+		const result = await queryDB(db, sql, []);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new Option(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
+
 	async loadFromQuestion(db, question_id) {
 		const sql = `SELECT * FROM options WHERE question_id = ?`;
 		const result = await queryDB(db, sql, [question_id]);
 		if (result?.results && result.results.length > 0) {
-			Object.assign(this.result.results);
-			return true;
+			this.items = result.results.map((row) => new Option(row));
+			return this.items;
 		}
-		return false;
+		this.items = [];
+		return [];
 	}
 
 	async create(db) {
@@ -345,25 +415,37 @@ export class Result {
 		}
 		return false;
 	}
+	async loadAll(db) {
+		const sql = `SELECT * FROM results`;
+		const result = await queryDB(db, sql, []);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new Result(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
 
 	async loadFromUser(db, user_id) {
 		const sql = `SELECT * FROM results WHERE user_id = ?`;
 		const result = await queryDB(db, sql, [user_id]);
 		if (result?.results && result.results.length > 0) {
-			Object.assign(this.result.results);
-			return true;
+			this.items = result.results.map((row) => new Result(row));
+			return this.items;
 		}
-		return false;
+		this.items = [];
+		return [];
 	}
 
 	async loadFromQuiz(db, quiz_id) {
 		const sql = `SELECT * FROM results WHERE quiz_id = ?`;
 		const result = await queryDB(db, sql, [quiz_id]);
 		if (result?.results && result.results.length > 0) {
-			Object.assign(this.result.results);
-			return true;
+			this.items = result.results.map((row) => new Result(row));
+			return this.items;
 		}
-		return false;
+		this.items = [];
+		return [];
 	}
 
 	async create(db) {
