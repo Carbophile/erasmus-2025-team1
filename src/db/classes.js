@@ -169,6 +169,16 @@ export class Question {
 		return false;
 	}
 
+	async loadFromCategory(db, category_id) {
+		const sql = `SELECT * FROM questions WHERE category_id = ?`;
+		const result = await queryDB(db, sql, [category_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
+			return true;
+		}
+		return false;
+	}
+
 	async create(db) {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO questions (category_id, quiz_id, text, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -267,6 +277,16 @@ export class Option {
 		return false;
 	}
 
+	async loadFromQuestion(db, question_id) {
+		const sql = `SELECT * FROM options WHERE question_id = ?`;
+		const result = await queryDB(db, sql, [question_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
+			return true;
+		}
+		return false;
+	}
+
 	async create(db) {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO options (question_id, option, correct, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;
@@ -325,6 +345,26 @@ export class Result {
 		const result = await queryDB(db, sql, [id]);
 		if (result && result.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
+			return true;
+		}
+		return false;
+	}
+
+	async loadFromUser(db, user_id) {
+		const sql = `SELECT * FROM results WHERE user_id = ?`;
+		const result = await queryDB(db, sql, [user_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
+			return true;
+		}
+		return false;
+	}
+
+	async loadFromQuiz(db, quiz_id) {
+		const sql = `SELECT * FROM results WHERE quiz_id = ?`;
+		const result = await queryDB(db, sql, [quiz_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
 			return true;
 		}
 		return false;
