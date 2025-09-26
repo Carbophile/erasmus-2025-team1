@@ -1,0 +1,74 @@
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1d2d50; /* Dutch Blue */
+  color: #fff;
+  padding: 0.8rem 2rem;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.25);
+}
+
+nav .logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+nav .logo i {
+  margin-right: 8px;
+  font-size: 1.4rem;
+  color: #ff0000; 
+}
+
+nav .navbar {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  gap: 2rem;
+  flex: 1; 
+}
+
+nav .navbar li {
+  list-style: none;
+}
+
+nav .navbar a {
+  text-decoration: none;
+  color: #e0e0e0;
+  font-size: 1rem;
+  transition: 0.3s;
+  position: relative;
+}
+
+nav .navbar a:hover {
+  color: #ff0000;
+}
+
+nav .navbar a::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #ff0000;
+  transition: width 0.3s ease-in-out;
+}
+
+nav .navbar a:hover::after {
+  width: 100%;
+}
+
+nav .profile {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+nav .profile i {
+  font-size: 1.5rem;
+  margin-right: 6px;
+  color: #ff0000;
+}
