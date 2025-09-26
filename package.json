@@ -14,5 +14,8 @@
 		"@biomejs/biome": "2.2.4",
 		"husky": "^9.1.7",
 		"wrangler": "^4.40.0"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.2"
 	}
 }
