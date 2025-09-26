@@ -26,7 +26,7 @@ export class User {
 	async load(db, id) {
 		const sql = `SELECT * FROM users WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -36,7 +36,7 @@ export class User {
 	async loadByEmail(db, email) {
 		const sql = `SELECT * FROM users WHERE email = ?`;
 		const result = await queryDB(db, sql, [email]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -95,7 +95,7 @@ export class Quiz {
 	async load(db, id) {
 		const sql = `SELECT * FROM quizes WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -162,7 +162,7 @@ export class Question {
 	async load(db, id) {
 		const sql = `SELECT * FROM questions WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -218,7 +218,7 @@ export class Category {
 	async load(db, id) {
 		const sql = `SELECT * FROM categories WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -260,7 +260,7 @@ export class Option {
 	async load(db, id) {
 		const sql = `SELECT * FROM options WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
@@ -323,7 +323,7 @@ export class Result {
 	async load(db, id) {
 		const sql = `SELECT * FROM results WHERE id = ?`;
 		const result = await queryDB(db, sql, [id]);
-		if (result && result.results && result.results.length > 0) {
+		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
 			return true;
 		}
