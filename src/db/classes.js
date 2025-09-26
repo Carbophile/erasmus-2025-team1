@@ -126,7 +126,7 @@ export class Quiz {
 			now,
 			now,
 		]);
-		if (result.success) this.id = result.lastRowId;
+		if (result.success) this.id = result.meta.last_row_id;
 		return result;
 	}
 
@@ -196,7 +196,7 @@ export class Question {
 			now,
 			now,
 		]);
-		if (result.success) this.id = result.lastRowId;
+		if (result.success) this.id = result.meta.last_row_id;
 		return result;
 	}
 
@@ -243,7 +243,7 @@ export class Category {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO categories (name, create_date, update_date) VALUES (?, ?, ?)`;
 		const result = await execDB(db, sql, [this.name, now, now]);
-		if (result.success) this.id = result.lastRowId;
+		if (result.success) this.id = result.meta.last_row_id;
 		return result;
 	}
 
@@ -301,7 +301,7 @@ export class Option {
 			now,
 			now,
 		]);
-		if (result.success) this.id = result.lastRowId;
+		if (result.success) this.id = result.meta.last_row_id;
 		return result;
 	}
 
@@ -377,7 +377,7 @@ export class Result {
 			now,
 			now,
 		]);
-		if (result.success) this.id = result.lastRowId;
+		if (result.success) this.id = result.meta.last_row_id;
 		return result;
 	}
 
