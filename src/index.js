@@ -32,7 +32,6 @@ export default {
 					const db = getDB(env);
 					console.log(db);
 					console.log("Creating user...");
-					const data = await request.json();
 					const newUser = new User({
 						email: "bV5yaKxsxxs@example.com",
 						name: "Test User",
