@@ -137,27 +137,27 @@ export class Quiz {
 }
 
 export class Question {
-	constructor({
-		id,
-		quiz_id,
-		text,
-		category,
-		country,
-		difficulty,
-		score_multiplier,
-		create_date,
-		update_date,
-	}) {
-		this.id = id;
-		this.quiz_id = quiz_id;
-		this.text = text;
-		this.category = category;
-		this.country = country;
-		this.difficulty = difficulty;
-		this.score_multiplier = score_multiplier;
-		this.create_date = create_date;
-		this.update_date = update_date;
-	}
+       constructor({
+	       id,
+	       category_id,
+	       quiz_id,
+	       text,
+	       country,
+	       difficulty,
+	       score_multiplier,
+	       create_date,
+	       update_date,
+       }) {
+	       this.id = id;
+	       this.category_id = category_id;
+	       this.quiz_id = quiz_id;
+	       this.text = text;
+	       this.country = country;
+	       this.difficulty = difficulty;
+	       this.score_multiplier = score_multiplier;
+	       this.create_date = create_date;
+	       this.update_date = update_date;
+       }
 
 	async load(db, id) {
 		const sql = `SELECT * FROM questions WHERE id = ?`;
@@ -169,45 +169,85 @@ export class Question {
 		return false;
 	}
 
-	async create(db) {
-		const now = new Date().toISOString();
-		const sql = `INSERT INTO questions (quiz_id, text, category, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-		const result = await execDB(db, sql, [
-			this.quiz_id,
-			this.text,
-			this.category,
-			this.country,
-			this.difficulty,
-			this.score_multiplier,
-			now,
-			now,
-		]);
-		if (result.success) this.id = result.lastRowId;
-		return result;
-	}
+       async create(db) {
+	       const now = new Date().toISOString();
+	       const sql = `INSERT INTO questions (category_id, quiz_id, text, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+	       const result = await execDB(db, sql, [
+		       this.category_id,
+		       this.quiz_id,
+		       this.text,
+		       this.country,
+		       this.difficulty,
+		       this.score_multiplier,
+		       now,
+		       now,
+	       ]);
+	       if (result.success) this.id = result.lastRowId;
+	       return result;
+       }
 
-	async update(db) {
-		if (!this.id) throw new Error("Question id required for update");
-		const now = new Date().toISOString();
-		const sql = `UPDATE questions SET quiz_id=?, text=?, category=?, country=?, difficulty=?, score_multiplier=?, update_date=? WHERE id=?`;
-		return execDB(db, sql, [
-			this.quiz_id,
-			this.text,
-			this.category,
-			this.country,
-			this.difficulty,
-			this.score_multiplier,
-			now,
-			this.id,
-		]);
-	}
-
-	async delete(db) {
+       async update(db) {
+	       if (!this.id) throw new Error("Question id required for update");
+	       const now = new Date().toISOString();
+	       const sql = `UPDATE questions SET category_id=?, quiz_id=?, text=?, country=?, difficulty=?, score_multiplier=?, update_date=? WHERE id=?`;
+	       return execDB(db, sql, [
+		       this.category_id,
+		       this.quiz_id,
+		       this.text,
+		       this.country,
+		       this.difficulty,
+		       this.score_multiplier,
+		       now,
+		       this.id,
+	       ]);
+       }
+       async delete(db) {
 		if (!this.id) throw new Error("Question id required for delete");
 		const sql = `DELETE FROM questions WHERE id=?`;
 		return execDB(db, sql, [this.id]);
 	}
 }
+export class Category {
+       constructor({ id, name, create_date, update_date }) {
+	       this.id = id;
+	       this.name = name;
+	       this.create_date = create_date;
+	       this.update_date = update_date;
+       }
+
+       async load(db, id) {
+	       const sql = `SELECT * FROM categories WHERE id = ?`;
+	       const result = await queryDB(db, sql, [id]);
+	       if (result && result.results && result.results.length > 0) {
+		       Object.assign(this, result.results[0]);
+		       return true;
+	       }
+	       return false;
+       }
+
+       async create(db) {
+	       const now = new Date().toISOString();
+	       const sql = `INSERT INTO categories (name, create_date, update_date) VALUES (?, ?, ?)`;
+	       const result = await execDB(db, sql, [this.name, now, now]);
+	       if (result.success) this.id = result.lastRowId;
+	       return result;
+       }
+
+       async update(db) {
+	       if (!this.id) throw new Error("Category id required for update");
+	       const now = new Date().toISOString();
+	       const sql = `UPDATE categories SET name=?, update_date=? WHERE id=?`;
+	       return execDB(db, sql, [this.name, now, this.id]);
+       }
+
+       async delete(db) {
+	       if (!this.id) throw new Error("Category id required for delete");
+	       const sql = `DELETE FROM categories WHERE id=?`;
+	       return execDB(db, sql, [this.id]);
+       }
+}
+
+	
 
 export class Option {
 	constructor({ id, question_id, option, correct, create_date, update_date }) {
@@ -264,14 +304,15 @@ export class Option {
 }
 
 export class Result {
-	constructor({ id, user_id, score, time_taken, create_date, update_date }) {
-		this.id = id;
-		this.user_id = user_id;
-		this.score = score;
-		this.time_taken = time_taken;
-		this.create_date = create_date;
-		this.update_date = update_date;
-	}
+       constructor({ id, user_id, quiz_id, score, time_taken, create_date, update_date }) {
+	       this.id = id;
+	       this.user_id = user_id;
+	       this.quiz_id = quiz_id;
+	       this.score = score;
+	       this.time_taken = time_taken;
+	       this.create_date = create_date;
+	       this.update_date = update_date;
+       }
 
 	async load(db, id) {
 		const sql = `SELECT * FROM results WHERE id = ?`;
@@ -283,32 +324,34 @@ export class Result {
 		return false;
 	}
 
-	async create(db) {
-		const now = new Date().toISOString();
-		const sql = `INSERT INTO results (user_id, score, time_taken, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;
-		const result = await execDB(db, sql, [
-			this.user_id,
-			this.score,
-			this.time_taken,
-			now,
-			now,
-		]);
-		if (result.success) this.id = result.lastRowId;
-		return result;
-	}
+       async create(db) {
+	       const now = new Date().toISOString();
+	       const sql = `INSERT INTO results (user_id, quiz_id, score, time_taken, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?)`;
+	       const result = await execDB(db, sql, [
+		       this.user_id,
+		       this.quiz_id,
+		       this.score,
+		       this.time_taken,
+		       now,
+		       now,
+	       ]);
+	       if (result.success) this.id = result.lastRowId;
+	       return result;
+       }
 
-	async update(db) {
-		if (!this.id) throw new Error("Result id required for update");
-		const now = new Date().toISOString();
-		const sql = `UPDATE results SET user_id=?, score=?, time_taken=?, update_date=? WHERE id=?`;
-		return execDB(db, sql, [
-			this.user_id,
-			this.score,
-			this.time_taken,
-			now,
-			this.id,
-		]);
-	}
+       async update(db) {
+	       if (!this.id) throw new Error("Result id required for update");
+	       const now = new Date().toISOString();
+	       const sql = `UPDATE results SET user_id=?, quiz_id=?, score=?, time_taken=?, update_date=? WHERE id=?`;
+	       return execDB(db, sql, [
+		       this.user_id,
+		       this.quiz_id,
+		       this.score,
+		       this.time_taken,
+		       now,
+		       this.id,
+	       ]);
+       }
 
 	async delete(db) {
 		if (!this.id) throw new Error("Result id required for delete");
