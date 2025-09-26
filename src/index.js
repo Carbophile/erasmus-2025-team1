@@ -150,13 +150,13 @@ export default {
 					const db = getDB(env);
 					const { Result } = await import("./db/classes.js");
 					const data = await request.json();
-					const _resultData = {
+					const resultData = {
 						score: data.score || "Placeholder",
 						time_taken: data.time_taken || "Placeholder",
 						create_date: data.create_date || "Placeholder",
 						update_date: data.update_date || "Placeholder",
 					};
-					const resultObject = new Result(resultdata);
+					const resultObject = new Result(resultData);
 
 					const result = await resultObject.create(db);
 					if (result.success) {
@@ -168,7 +168,7 @@ export default {
 						return new Response(
 							JSON.stringify({
 								success: false,
-								errsor: "User creation failed",
+								error: "User creation failed",
 							}),
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
