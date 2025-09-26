@@ -1,4 +1,4 @@
-import { getDB, getUserById, queryDB, User } from "./db";
+import { getDB, queryDB } from "./db/db";
 
 export default {
 	async fetch(request, env, _ctx) {
@@ -16,7 +16,7 @@ export default {
 						headers: { "Content-Type": "application/json" },
 					});
 				} catch (e) {
-					return new Response("DB Error: " + e.message, { status: 500 });
+					return new Response(`DB Error: ${e.message}`, { status: 500 });
 				}
 			}
 
