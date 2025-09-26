@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="../admin/userResult.css" />
+        <link rel="stylesheet" href="../admin/users.css">
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		/>
+		<title>Admin</title>
+	</head>
+
+	<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <i class="fas fa-user-shield"></i>
+                <span>Admin Panel</span>
+            </div>
+
+            <ul class="navbar">
+                <li class="nav-item"><a href="users.html">Users</a></li>
+                <li class="nav-item"><a href="userResult.html">UserResult</a></li>
+            </ul>
+
+            <div class="profile">
+                <i class="fas fa-user-circle"></i>
+                <span>Profile</span>
+            </div>
+        </nav>
+
+    </header>
+    <div class="main-layout">
+        <div class="sidebar">
+            <button class="sidebar-btn active">Users</button>
+            <button class="sidebar-btn">Questions</button>
+        </div>
+
+        <div class="content">
+            <div class="content-header">
+                <button class="back-btn">←</button>
+                <div class="breadcrumb">
+                    <a href="users">Users</a> › Results
+                </div>
+            </div>
+
+             Results Table 
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Score</th>
+                            <th>Time taken</th>
+                            <th>Quiz Id</th>
+                            <th>Date</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody">
+                    </tbody>
+                </table>
+                <div id="loading-state" style="display: none; padding: 40px; text-align: center; color: #666;">
+                    Loading results...
+                </div>
+                <div id="empty-state" style="display: none; padding: 40px; text-align: center; color: #666;">
+                    No quiz results found.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function deleteResult(id) {
+            if (confirm('Are you sure you want to delete this quiz result?')) {
+                // Here you would make an API call to delete the result
+                console.log('Deleting result with ID:', id);
+                // Remove the row from the table
+                event.target.closest('tr').remove();
+            }
+        }
+
+        // Add click handlers for navigation
+        document.querySelectorAll('.sidebar-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+	</body>
+</html>
