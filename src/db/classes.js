@@ -10,6 +10,7 @@ export class User {
 		email,
 		name,
 		password,
+		total_score,
 		is_admin,
 		create_date,
 		update_date,
@@ -18,6 +19,7 @@ export class User {
 		this.email = email;
 		this.name = name;
 		this.password = password;
+		this.total_score = this.getTotalScore(db, id);
 		this.is_admin = is_admin;
 		this.create_date = create_date;
 		this.update_date = update_date;
@@ -41,6 +43,16 @@ export class User {
 			return true;
 		}
 		return false;
+	}
+
+	async getTotalScore(db, user_id) {
+		const sql = `SELECT SUM(score) as total_score FROM results WHERE user_id = ?`;
+		const result = await queryDB(db, sql, [user_id]);
+		if (result && result.results && result.results.length > 0) {
+			this.total_score = result.results[0].total_score || 0;
+			return this.total_score;
+		}
+		return 0;
 	}
 
 	async create(db) {
@@ -97,6 +109,16 @@ export class Quiz {
 		const result = await queryDB(db, sql, [id]);
 		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
+			return true;
+		}
+		return false;
+	}
+
+	async loadAll(db) {
+		const sql = `SELECT * FROM quizes`;
+		const result = await queryDB(db, sql, [id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this, result.results);
 			return true;
 		}
 		return false;
@@ -164,6 +186,16 @@ export class Question {
 		const result = await queryDB(db, sql, [id]);
 		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
+			return true;
+		}
+		return false;
+	}
+
+	async loadFromCategory(db, category_id) {
+		const sql = `SELECT * FROM questions WHERE category_id = ?`;
+		const result = await queryDB(db, sql, [category_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
 			return true;
 		}
 		return false;
@@ -267,6 +299,16 @@ export class Option {
 		return false;
 	}
 
+	async loadFromQuestion(db, question_id) {
+		const sql = `SELECT * FROM options WHERE question_id = ?`;
+		const result = await queryDB(db, sql, [question_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
+			return true;
+		}
+		return false;
+	}
+
 	async create(db) {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO options (question_id, option, correct, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;
@@ -325,6 +367,26 @@ export class Result {
 		const result = await queryDB(db, sql, [id]);
 		if (result?.results && result.results.length > 0) {
 			Object.assign(this, result.results[0]);
+			return true;
+		}
+		return false;
+	}
+
+	async loadFromUser(db, user_id) {
+		const sql = `SELECT * FROM results WHERE user_id = ?`;
+		const result = await queryDB(db, sql, [user_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
+			return true;
+		}
+		return false;
+	}
+
+	async loadFromQuiz(db, quiz_id) {
+		const sql = `SELECT * FROM results WHERE quiz_id = ?`;
+		const result = await queryDB(db, sql, [quiz_id]);
+		if (result && result.results && result.results.length > 0) {
+			Object.assign(this.result.results);
 			return true;
 		}
 		return false;
