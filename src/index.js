@@ -1,5 +1,5 @@
+import { User } from "./db/classes";
 import { getDB, queryDB } from "./db/db";
-import { User, Quiz, Question, Category, Result } from "./db/classes";
 
 export default {
 	async fetch(request, env, _ctx) {
@@ -54,10 +54,10 @@ export default {
 					const { Quiz } = await import("./db/classes.js");
 					const data = await request.json();
 					const quizData = {
-						name: data.name || 'Placeholder name',
-						score_needed: data.score_needed || 'Placeholder name',
-						max_time: data.max_time || 'Placeholder name'
-					}
+						name: data.name || "Placeholder name",
+						score_needed: data.score_needed || "Placeholder name",
+						max_time: data.max_time || "Placeholder name",
+					};
 					const quiz = new Quiz(quizData);
 
 					const result = await quiz.create(db);
@@ -72,15 +72,9 @@ export default {
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
 					}
-
-
-
-
 				} catch (e) {
 					return new Response(`Error: ${e.message}`, { status: 500 });
 				}
-
-
 			}
 			case "/quiz/question": {
 				if (request.method !== "POST") {
@@ -91,12 +85,11 @@ export default {
 					const { Question } = await import("./db/classes.js");
 					const data = await request.json();
 					const questionData = {
-						text: data.text || 'Placeholder',
-						country: data.country || 'Placeholder country',
-						difficulty: data.difficulty || 'Placeholder',
-						score_multiplier: data.score_multiplier || 'Placeholder'
-
-					}
+						text: data.text || "Placeholder",
+						country: data.country || "Placeholder country",
+						difficulty: data.difficulty || "Placeholder",
+						score_multiplier: data.score_multiplier || "Placeholder",
+					};
 					const question = new Question(questionData);
 
 					const result = await question.create(db);
@@ -110,12 +103,10 @@ export default {
 							JSON.stringify({ success: false, error: "User creation failed" }),
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
-
 					}
-
 				} catch (e) {
 					return new Response(`Error: ${e.message}`, {
-						status: 500
+						status: 500,
 					});
 				}
 			}
@@ -128,11 +119,9 @@ export default {
 					const { Category } = await import("./db/classes.js");
 					const data = await request.json();
 					const categoryData = {
-						create_date: data.create_date || 'Placeholder',
-						update_date: data.update_date || 'Placeholder'
-
-
-					}
+						create_date: data.create_date || "Placeholder",
+						update_date: data.update_date || "Placeholder",
+					};
 					const category = new Category(categoryData);
 
 					const result = await category.create(db);
@@ -146,13 +135,10 @@ export default {
 							JSON.stringify({ success: false, error: "User creation failed" }),
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
-
 					}
-
-				}
-				catch (e) {
+				} catch (e) {
 					return new Response(`Error: ${e.message}`, {
-						status: 500
+						status: 500,
 					});
 				}
 			}
@@ -164,15 +150,15 @@ export default {
 					const db = getDB(env);
 					const { Result } = await import("./db/classes.js");
 					const data = await request.json();
-					const resultData = {
-						score: data.score || 'Placeholder',
-						time_taken: data.time_taken || 'Placeholder',
-						create_date: data.create_date || 'Placeholder',
-						update_date: data.update_date || 'Placeholder'
-					}
+					const _resultData = {
+						score: data.score || "Placeholder",
+						time_taken: data.time_taken || "Placeholder",
+						create_date: data.create_date || "Placeholder",
+						update_date: data.update_date || "Placeholder",
+					};
 					const resultObject = new Result(resultdata);
 
-					const result = await result.create(db);
+					const result = await resultObject.create(db);
 					if (result.success) {
 						return new Response(
 							JSON.stringify({ success: true, user_id: user.id }),
@@ -180,25 +166,19 @@ export default {
 						);
 					} else {
 						return new Response(
-							JSON.stringify({ success: false, error: "User creation failed" }),
+							JSON.stringify({
+								success: false,
+								errsor: "User creation failed",
+							}),
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
-
 					}
-
 				} catch (e) {
 					return new Response(`Error: ${e.message}`, {
-						status: 500
+						status: 500,
 					});
-
 				}
 			}
-
-
-
-
-
-
 
 			default:
 				return new Response("Not Found", { status: 404 });
