@@ -1,5 +1,3 @@
-import bcrypt from "bcryptjs";
-
 // Get db
 export function getDB(env) {
 	if (!env.main_db) {
@@ -30,18 +28,4 @@ export async function execDB(db, sql, params = []) {
 	} catch (error) {
 		throw new Error(`Execution failed: ${error.message}`);
 	}
-}
-
-// user password check, should be moved to auth later
-export async function checkUserPassword(db, email, password) {
-	const result = await queryDB(
-		db,
-		"SELECT password FROM users WHERE email = ?",
-		[email],
-	);
-	if (result?.results && result.results.length > 0) {
-		const hash = result.results[0].password;
-		return await bcrypt.compare(password, hash);
-	}
-	return false;
 }

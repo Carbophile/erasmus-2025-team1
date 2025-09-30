@@ -1,0 +1,507 @@
+Index: src/db/classes.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// src/db/classes.js\n// Classes for each table in the database\n\nimport bcrypt from \"bcryptjs\";\nimport { execDB, queryDB } from \"./db\";\n\nexport class User {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.email = obj.email ?? null;\n\t\tthis.name = obj.name ?? null;\n\t\tthis.password = obj.password ?? null;\n\t\tthis.total_score = obj.total_score ?? null;\n\t\tthis.is_admin = obj.is_admin ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM users WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM users`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new User(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\tasync loadLeaderboard(db, limit = null) {\n\t\tvar sql = `SELECT id, email, name, SUM(results.score) as total_score FROM users INNER JOIN results ON users.id = results.user_id GROUP BY users.id ORDER BY total_score DESC`;\n\t\tvar result;\n\t\tif (limit) {\n\t\t\tsql += ` LIMIT ?`;\n\t\t\tresult = await queryDB(db, sql, [limit]);\n\t\t} else {\n\t\t\tresult = await queryDB(db, sql, []);\n\t\t}\n\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new User(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync loadByEmail(db, email) {\n\t\tconst sql = `SELECT * FROM users WHERE email = ?`;\n\t\tconst result = await queryDB(db, sql, [email]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\n\tasync getTotalScore(db, user_id) {\n\t\tconst sql = `SELECT SUM(score) as total_score FROM results WHERE user_id = ?`;\n\t\tconst result = await queryDB(db, sql, [user_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.total_score = result.results[0].total_score || 0;\n\t\t\treturn this.total_score;\n\t\t}\n\t\treturn 0;\n\t}\n\n\tasync create(db) {\n\t\tif (this.password && !this.password.startsWith(\"$2\")) {\n\t\t\tthis.password = bcrypt.hashSync(this.password, 10);\n\t\t}\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO users (email, name, password, is_admin, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [\n\t\t\tthis.email,\n\t\t\tthis.name,\n\t\t\tthis.password,\n\t\t\tthis.is_admin ? 1 : 0,\n\t\t\tnow,\n\t\t\tnow,\n\t\t]);\n\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"User id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE users SET email=?, name=?, password=?, is_admin=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [\n\t\t\tthis.email,\n\t\t\tthis.name,\n\t\t\tthis.password,\n\t\t\tthis.is_admin ? 1 : 0,\n\t\t\tnow,\n\t\t\tthis.id,\n\t\t]);\n\t}\n\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"User id required for delete\");\n\t\tconst sql = `DELETE FROM users WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\n\nexport class Quiz {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.score_needed = obj.score_needed ?? null;\n\t\tthis.name = obj.name ?? null;\n\t\tthis.max_time = obj.max_time ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM quizes WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM quizes`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Quiz(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync create(db) {\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO quizes (score_needed, name, max_time, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [\n\t\t\tthis.score_needed,\n\t\t\tthis.name,\n\t\t\tthis.max_time,\n\t\t\tnow,\n\t\t\tnow,\n\t\t]);\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"Quiz id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE quizes SET score_needed=?, name=?, max_time=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [\n\t\t\tthis.score_needed,\n\t\t\tthis.name,\n\t\t\tthis.max_time,\n\t\t\tnow,\n\t\t\tthis.id,\n\t\t]);\n\t}\n\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"Quiz id required for delete\");\n\t\tconst sql = `DELETE FROM quizes WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\n\nexport class Question {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.category_id = obj.category_id ?? null;\n\t\tthis.quiz_id = obj.quiz_id ?? null;\n\t\tthis.text = obj.text ?? null;\n\t\tthis.country = obj.country ?? null;\n\t\tthis.difficulty = obj.difficulty ?? null;\n\t\tthis.score_multiplier = obj.score_multiplier ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM questions WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM questions`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new User(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync loadFromCategory(db, category_id) {\n\t\tconst sql = `SELECT * FROM questions WHERE category_id = ?`;\n\t\tconst result = await queryDB(db, sql, [category_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Question(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\tasync loadFromQuiz(db, quiz_id) {\n\t\tconst sql = `SELECT * FROM questions WHERE quiz_id = ?`;\n\t\tconst result = await queryDB(db, sql, [quiz_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Question(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync create(db) {\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO questions (category_id, quiz_id, text, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [\n\t\t\tthis.category_id,\n\t\t\tthis.quiz_id,\n\t\t\tthis.text,\n\t\t\tthis.country,\n\t\t\tthis.difficulty,\n\t\t\tthis.score_multiplier,\n\t\t\tnow,\n\t\t\tnow,\n\t\t]);\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"Question id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE questions SET category_id=?, quiz_id=?, text=?, country=?, difficulty=?, score_multiplier=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [\n\t\t\tthis.category_id,\n\t\t\tthis.quiz_id,\n\t\t\tthis.text,\n\t\t\tthis.country,\n\t\t\tthis.difficulty,\n\t\t\tthis.score_multiplier,\n\t\t\tnow,\n\t\t\tthis.id,\n\t\t]);\n\t}\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"Question id required for delete\");\n\t\tconst sql = `DELETE FROM questions WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\nexport class Category {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.name = obj.name ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM categories WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM categories`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Category(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\tasync create(db) {\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO categories (name, create_date, update_date) VALUES (?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [this.name, now, now]);\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"Category id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE categories SET name=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [this.name, now, this.id]);\n\t}\n\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"Category id required for delete\");\n\t\tconst sql = `DELETE FROM categories WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\n\nexport class Option {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.question_id = obj.question_id ?? null;\n\t\tthis.option = obj.option ?? null;\n\t\tthis.correct = obj.correct ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM options WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM options`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Option(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync loadFromQuestion(db, question_id) {\n\t\tconst sql = `SELECT * FROM options WHERE question_id = ?`;\n\t\tconst result = await queryDB(db, sql, [question_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Option(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync create(db) {\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO options (question_id, option, correct, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [\n\t\t\tthis.question_id,\n\t\t\tthis.option,\n\t\t\tthis.correct,\n\t\t\tnow,\n\t\t\tnow,\n\t\t]);\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"Option id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE options SET question_id=?, option=?, correct=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [\n\t\t\tthis.question_id,\n\t\t\tthis.option,\n\t\t\tthis.correct,\n\t\t\tnow,\n\t\t\tthis.id,\n\t\t]);\n\t}\n\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"Option id required for delete\");\n\t\tconst sql = `DELETE FROM options WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\n\nexport class Result {\n\tconstructor(obj = {}) {\n\t\tthis.id = obj.id ?? null;\n\t\tthis.user_id = obj.user_id ?? null;\n\t\tthis.quiz_id = obj.quiz_id ?? null;\n\t\tthis.score = obj.score ?? null;\n\t\tthis.time_taken = obj.time_taken ?? null;\n\t\tthis.create_date = obj.create_date ?? null;\n\t\tthis.update_date = obj.update_date ?? null;\n\t}\n\n\tasync load(db, id) {\n\t\tconst sql = `SELECT * FROM results WHERE id = ?`;\n\t\tconst result = await queryDB(db, sql, [id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tObject.assign(this, result.results[0]);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n\tasync loadAll(db) {\n\t\tconst sql = `SELECT * FROM results`;\n\t\tconst result = await queryDB(db, sql, []);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Result(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync loadFromUser(db, user_id) {\n\t\tconst sql = `SELECT * FROM results WHERE user_id = ?`;\n\t\tconst result = await queryDB(db, sql, [user_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Result(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync loadFromQuiz(db, quiz_id) {\n\t\tconst sql = `SELECT * FROM results WHERE quiz_id = ?`;\n\t\tconst result = await queryDB(db, sql, [quiz_id]);\n\t\tif (result?.results && result.results.length > 0) {\n\t\t\tthis.items = result.results.map((row) => new Result(row));\n\t\t\treturn this.items;\n\t\t}\n\t\tthis.items = [];\n\t\treturn [];\n\t}\n\n\tasync create(db) {\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `INSERT INTO results (user_id, quiz_id, score, time_taken, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?)`;\n\t\tconst result = await execDB(db, sql, [\n\t\t\tthis.user_id,\n\t\t\tthis.quiz_id,\n\t\t\tthis.score,\n\t\t\tthis.time_taken,\n\t\t\tnow,\n\t\t\tnow,\n\t\t]);\n\t\tif (result.success) this.id = result.meta.last_row_id;\n\t\treturn result;\n\t}\n\n\tasync update(db) {\n\t\tif (!this.id) throw new Error(\"Result id required for update\");\n\t\tconst now = new Date().toISOString();\n\t\tconst sql = `UPDATE results SET user_id=?, quiz_id=?, score=?, time_taken=?, update_date=? WHERE id=?`;\n\t\treturn execDB(db, sql, [\n\t\t\tthis.user_id,\n\t\t\tthis.quiz_id,\n\t\t\tthis.score,\n\t\t\tthis.time_taken,\n\t\t\tnow,\n\t\t\tthis.id,\n\t\t]);\n\t}\n\n\tasync delete(db) {\n\t\tif (!this.id) throw new Error(\"Result id required for delete\");\n\t\tconst sql = `DELETE FROM results WHERE id=?`;\n\t\treturn execDB(db, sql, [this.id]);\n\t}\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/db/classes.js b/src/db/classes.js
+--- a/src/db/classes.js	(revision 133e8e8ffc46ea681d63bce11c60e5e84c3e4137)
++++ b/src/db/classes.js	(date 1759229974796)
+@@ -63,6 +63,13 @@
+ 		return false;
+ 	}
+ 
++	verifyPassword(password) {
++		if (!this.password || !password) {
++			return false;
++		}
++		return bcrypt.compareSync(password, this.password);
++	}
++
+ 	async getTotalScore(db, user_id) {
+ 		const sql = `SELECT SUM(score) as total_score FROM results WHERE user_id = ?`;
+ 		const result = await queryDB(db, sql, [user_id]);
+@@ -184,7 +191,7 @@
+ 		this.category_id = obj.category_id ?? null;
+ 		this.quiz_id = obj.quiz_id ?? null;
+ 		this.text = obj.text ?? null;
+-		this.country = obj.country ?? null;
++		this.answer = obj.answer ?? null;
+ 		this.difficulty = obj.difficulty ?? null;
+ 		this.score_multiplier = obj.score_multiplier ?? null;
+ 		this.create_date = obj.create_date ?? null;
+@@ -211,6 +218,23 @@
+ 		return [];
+ 	}
+ 
++	async loadRandom(db, exclude = []) {
++		let sql =
++			"SELECT id, category_id, quiz_id, text, answer, difficulty, score_multiplier FROM questions";
++		const params = [];
++		if (exclude.length > 0) {
++			sql += ` WHERE id NOT IN (${exclude.map(() => "?").join(",")})`;
++			params.push(...exclude);
++		}
++		sql += " ORDER BY RANDOM() LIMIT 1";
++		const result = await queryDB(db, sql, params);
++		if (result?.results && result.results.length > 0) {
++			// We need to return a new object, not assign to this
++			return new Question(result.results[0]);
++		}
++		return null;
++	}
++
+ 	async loadFromCategory(db, category_id) {
+ 		const sql = `SELECT * FROM questions WHERE category_id = ?`;
+ 		const result = await queryDB(db, sql, [category_id]);
+@@ -234,12 +258,12 @@
+ 
+ 	async create(db) {
+ 		const now = new Date().toISOString();
+-		const sql = `INSERT INTO questions (category_id, quiz_id, text, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
++		const sql = `INSERT INTO questions (category_id, quiz_id, text, answer, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+ 		const result = await execDB(db, sql, [
+ 			this.category_id,
+ 			this.quiz_id,
+ 			this.text,
+-			this.country,
++			this.answer,
+ 			this.difficulty,
+ 			this.score_multiplier,
+ 			now,
+@@ -252,12 +276,12 @@
+ 	async update(db) {
+ 		if (!this.id) throw new Error("Question id required for update");
+ 		const now = new Date().toISOString();
+-		const sql = `UPDATE questions SET category_id=?, quiz_id=?, text=?, country=?, difficulty=?, score_multiplier=?, update_date=? WHERE id=?`;
++		const sql = `UPDATE questions SET category_id=?, quiz_id=?, text=?, answer=?, difficulty=?, score_multiplier=?, update_date=? WHERE id=?`;
+ 		return execDB(db, sql, [
+ 			this.category_id,
+ 			this.quiz_id,
+ 			this.text,
+-			this.country,
++			this.answer,
+ 			this.difficulty,
+ 			this.score_multiplier,
+ 			now,
+Index: src/db/db.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import bcrypt from \"bcryptjs\";\n\n// Get db\nexport function getDB(env) {\n\tif (!env.main_db) {\n\t\tthrow new Error(\"Database not initialized\");\n\t}\n\treturn env.main_db;\n}\n\n// Query db instead of repeating the whole db prepare statement everywhere\nexport async function queryDB(db, sql, params = []) {\n\ttry {\n\t\treturn await db\n\t\t\t.prepare(sql)\n\t\t\t.bind(...params)\n\t\t\t.all();\n\t} catch (error) {\n\t\tthrow new Error(`Query failed: ${error.message}`);\n\t}\n}\n\n// Execute a SQL command (INSERT, UPDATE, DELETE)\nexport async function execDB(db, sql, params = []) {\n\ttry {\n\t\treturn await db\n\t\t\t.prepare(sql)\n\t\t\t.bind(...params)\n\t\t\t.run();\n\t} catch (error) {\n\t\tthrow new Error(`Execution failed: ${error.message}`);\n\t}\n}\n\n// user password check, should be moved to auth later\nexport async function checkUserPassword(db, email, password) {\n\tconst result = await queryDB(\n\t\tdb,\n\t\t\"SELECT password FROM users WHERE email = ?\",\n\t\t[email],\n\t);\n\tif (result?.results && result.results.length > 0) {\n\t\tconst hash = result.results[0].password;\n\t\treturn await bcrypt.compare(password, hash);\n\t}\n\treturn false;\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/db/db.js b/src/db/db.js
+--- a/src/db/db.js	(revision 133e8e8ffc46ea681d63bce11c60e5e84c3e4137)
++++ b/src/db/db.js	(date 1759230155566)
+@@ -31,17 +31,3 @@
+ 		throw new Error(`Execution failed: ${error.message}`);
+ 	}
+ }
+-
+-// user password check, should be moved to auth later
+-export async function checkUserPassword(db, email, password) {
+-	const result = await queryDB(
+-		db,
+-		"SELECT password FROM users WHERE email = ?",
+-		[email],
+-	);
+-	if (result?.results && result.results.length > 0) {
+-		const hash = result.results[0].password;
+-		return await bcrypt.compare(password, hash);
+-	}
+-	return false;
+-}
+Index: src/index.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import { User } from \"./db/classes\";\nimport { getDB } from \"./db/db\";\n\n// This is nowhere near final, just a skeleton to build upon\nexport default {\n\tasync fetch(request, env, _ctx) {\n\t\tconst url = new URL(request.url);\n\t\tswitch (url.pathname) {\n\t\t\tcase \"/user/new\": {\n\t\t\t\tif (request.method !== \"POST\") {\n\t\t\t\t\treturn new Response(\"Method Not Allowed\", { status: 405 });\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tconst db = getDB(env);\n\t\t\t\t\tconst data = await request.json();\n\t\t\t\t\tconst user = new User(data);\n\t\t\t\t\tconst result = await user.create(db);\n\t\t\t\t\tif (result.success) {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: true, user_id: user.id }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" } },\n\t\t\t\t\t\t);\n\t\t\t\t\t} else {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: false, error: \"User creation failed\" }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" }, status: 500 },\n\t\t\t\t\t\t);\n\t\t\t\t\t}\n\t\t\t\t} catch (e) {\n\t\t\t\t\treturn new Response(`Error: ${e.message}`, { status: 500 });\n\t\t\t\t}\n\t\t\t}\n\t\t\tcase \"/quiz/new\": {\n\t\t\t\tif (request.method !== \"POST\") {\n\t\t\t\t\treturn new Response(\"Method Not Allowed\", { status: 405 });\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tconst db = getDB(env);\n\t\t\t\t\tconst { Quiz } = await import(\"./db/classes.js\");\n\t\t\t\t\tconst data = await request.json();\n\t\t\t\t\tconst quizData = {\n\t\t\t\t\t\tname: data.name,\n\t\t\t\t\t\tscore_needed: data.score_needed,\n\t\t\t\t\t\tmax_time: data.max_time,\n\t\t\t\t\t};\n\t\t\t\t\tconst quiz = new Quiz(quizData);\n\n\t\t\t\t\tconst result = await quiz.create(db);\n\t\t\t\t\tif (result.success) {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: true, user_id: user.id }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" } },\n\t\t\t\t\t\t);\n\t\t\t\t\t} else {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: false, error: \"User creation failed\" }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" }, status: 500 },\n\t\t\t\t\t\t);\n\t\t\t\t\t}\n\t\t\t\t} catch (e) {\n\t\t\t\t\treturn new Response(`Error: ${e.message}`, { status: 500 });\n\t\t\t\t}\n\t\t\t}\n\t\t\tcase \"/quiz/question\": {\n\t\t\t\tif (request.method !== \"POST\") {\n\t\t\t\t\treturn new Response(\"Method Not Allowed\", { status: 405 });\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tconst db = getDB(env);\n\t\t\t\t\tconst { Question } = await import(\"./db/classes.js\");\n\t\t\t\t\tconst data = await request.json();\n\t\t\t\t\tconst questionData = {\n\t\t\t\t\t\ttext: data.text,\n\t\t\t\t\t\tcountry: data.country,\n\t\t\t\t\t\tdifficulty: data.difficulty,\n\t\t\t\t\t\tscore_multiplier: data.score_multiplier,\n\t\t\t\t\t};\n\t\t\t\t\tconst question = new Question(questionData);\n\n\t\t\t\t\tconst result = await question.create(db);\n\t\t\t\t\tif (result.success) {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: true, user_id: user.id }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" } },\n\t\t\t\t\t\t);\n\t\t\t\t\t} else {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: false, error: \"User creation failed\" }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" }, status: 500 },\n\t\t\t\t\t\t);\n\t\t\t\t\t}\n\t\t\t\t} catch (e) {\n\t\t\t\t\treturn new Response(`Error: ${e.message}`, {\n\t\t\t\t\t\tstatus: 500,\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\t\t\tcase \"/quiz/category\": {\n\t\t\t\tif (request.method !== \"POST\") {\n\t\t\t\t\treturn new Response(\"Method Not Allowed\", { status: 405 });\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tconst db = getDB(env);\n\t\t\t\t\tconst { Category } = await import(\"./db/classes.js\");\n\t\t\t\t\tconst data = await request.json();\n\t\t\t\t\tconst categoryData = {\n\t\t\t\t\t\tcreate_date: data.create_date,\n\t\t\t\t\t\tupdate_date: data.update_date,\n\t\t\t\t\t};\n\t\t\t\t\tconst category = new Category(categoryData);\n\n\t\t\t\t\tconst result = await category.create(db);\n\t\t\t\t\tif (result.success) {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: true, user_id: user.id }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" } },\n\t\t\t\t\t\t);\n\t\t\t\t\t} else {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: false, error: \"User creation failed\" }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" }, status: 500 },\n\t\t\t\t\t\t);\n\t\t\t\t\t}\n\t\t\t\t} catch (e) {\n\t\t\t\t\treturn new Response(`Error: ${e.message}`, {\n\t\t\t\t\t\tstatus: 500,\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\t\t\tcase \"/quiz/result\": {\n\t\t\t\tif (request.method !== \"POST\") {\n\t\t\t\t\treturn new Response(\"Method Not Allowed\", { status: 405 });\n\t\t\t\t}\n\t\t\t\ttry {\n\t\t\t\t\tconst db = getDB(env);\n\t\t\t\t\tconst { Result } = await import(\"./db/classes.js\");\n\t\t\t\t\tconst data = await request.json();\n\t\t\t\t\tconst resultData = {\n\t\t\t\t\t\tscore: data.score,\n\t\t\t\t\t\ttime_taken: data.time_taken,\n\t\t\t\t\t\tcreate_date: data.create_date,\n\t\t\t\t\t\tupdate_date: data.update_date,\n\t\t\t\t\t};\n\t\t\t\t\tconst resultObject = new Result(resultData);\n\n\t\t\t\t\tconst result = await resultObject.create(db);\n\t\t\t\t\tif (result.success) {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({ success: true, user_id: user.id }),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" } },\n\t\t\t\t\t\t);\n\t\t\t\t\t} else {\n\t\t\t\t\t\treturn new Response(\n\t\t\t\t\t\t\tJSON.stringify({\n\t\t\t\t\t\t\t\tsuccess: false,\n\t\t\t\t\t\t\t\terror: \"User creation failed\",\n\t\t\t\t\t\t\t}),\n\t\t\t\t\t\t\t{ headers: { \"Content-Type\": \"application/json\" }, status: 500 },\n\t\t\t\t\t\t);\n\t\t\t\t\t}\n\t\t\t\t} catch (e) {\n\t\t\t\t\treturn new Response(`Error: ${e.message}`, {\n\t\t\t\t\t\tstatus: 500,\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tdefault:\n\t\t\t\treturn new Response(\"Not Found\", { status: 404 });\n\t\t}\n\t},\n};\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/index.js b/src/index.js
+--- a/src/index.js	(revision 133e8e8ffc46ea681d63bce11c60e5e84c3e4137)
++++ b/src/index.js	(date 1759230053494)
+@@ -1,6 +1,19 @@
++import { sign, verify } from "./crypto";
+ import { User } from "./db/classes";
+ import { getDB } from "./db/db";
+ 
++const QUIZ_LIVES = 3;
++const QUESTION_TIME = 30; // in seconds
++
++async function verifyAdmin(db, email, password) {
++	const user = new User();
++	const userExists = await user.loadByEmail(db, email);
++	if (!userExists || !user.verifyPassword(password) || !user.is_admin) {
++		return false;
++	}
++	return true;
++}
++
+ // This is nowhere near final, just a skeleton to build upon
+ export default {
+ 	async fetch(request, env, _ctx) {
+@@ -26,6 +39,181 @@
+ 							{ headers: { "Content-Type": "application/json" }, status: 500 },
+ 						);
+ 					}
++				} catch (e) {
++					return new Response(`Error: ${e.message}`, { status: 500 });
++				}
++			}
++			case "/user/isAdmin": {
++				if (request.method !== "POST") {
++					return new Response("Method Not Allowed", { status: 405 });
++				}
++				try {
++					const db = getDB(env);
++					const { email, password } = await request.json();
++					const isAdmin = await verifyAdmin(db, email, password);
++					return new Response(JSON.stringify({ success: true, isAdmin }), {
++						headers: { "Content-Type": "application/json" },
++					});
++				} catch (e) {
++					return new Response(`Error: ${e.message}`, { status: 500 });
++				}
++			}
++			case "/quiz/start": {
++				if (request.method !== "POST") {
++					return new Response("Method Not Allowed", { status: 405 });
++				}
++				try {
++					const db = getDB(env);
++					const { Question } = await import("./db/classes.js");
++					const question = new Question();
++					const randomQuestion = await question.loadRandom(db);
++
++					if (!randomQuestion) {
++						return new Response(
++							JSON.stringify({
++								success: false,
++								error: "No questions available",
++							}),
++							{
++								headers: { "Content-Type": "application/json" },
++								status: 500,
++							},
++						);
++					}
++
++					const state = {
++						lives: QUIZ_LIVES,
++						score: 0,
++						question_id: randomQuestion.id,
++						question_difficulty: randomQuestion.difficulty,
++						question_start_time: Date.now(),
++						history: [],
++					};
++
++					const signedState = await sign(state, env.QUIZ_SECRET);
++
++					// Return the first question (without the answer) and the signed state
++					// biome-ignore lint/correctness/noUnusedVariables: <explanation>
++					const { answer, ...questionData } = randomQuestion;
++
++					return new Response(
++						JSON.stringify({
++							success: true,
++							question: questionData,
++							state: signedState,
++						}),
++						{ headers: { "Content-Type": "application/json" } },
++					);
++				} catch (e) {
++					return new Response(`Error: ${e.message}`, { status: 500 });
++				}
++			}
++			case "/quiz/answer": {
++				if (request.method !== "POST") {
++					return new Response("Method Not Allowed", { status: 405 });
++				}
++				try {
++					const db = getDB(env);
++					const { Question } = await import("./db/classes.js");
++					const { state: signedState, answer } = await request.json();
++
++					const state = await verify(signedState, env.QUIZ_SECRET);
++
++					if (!state) {
++						return new Response(
++							JSON.stringify({ success: false, error: "Invalid state" }),
++							{
++								headers: { "Content-Type": "application/json" },
++								status: 400,
++							},
++						);
++					}
++
++					const {
++						question_id,
++						question_start_time,
++						score,
++						history,
++						question_difficulty,
++					} = state;
++
++					// Check if the time limit for the question has been exceeded
++					if (Date.now() - question_start_time > QUESTION_TIME * 1000) {
++						state.lives -= 1;
++						if (state.lives <= 0) {
++							// Game over
++							return new Response(
++								JSON.stringify({
++									success: true,
++									game_over: true,
++									final_score: score,
++								}),
++								{
++									headers: { "Content-Type": "application/json" },
++								},
++							);
++						}
++					} else {
++						const question = new Question();
++						await question.load(db, question_id);
++
++						if (question.answer === answer) {
++							state.score += 1 * question_difficulty;
++						} else {
++							state.lives -= 1;
++						}
++					}
++
++					if (state.lives <= 0) {
++						// Game over
++						return new Response(
++							JSON.stringify({
++								success: true,
++								game_over: true,
++								final_score: score,
++							}),
++							{
++								headers: { "Content-Type": "application/json" },
++							},
++						);
++					}
++
++					// Load a new random question
++					const newQuestion = new Question();
++					const randomQuestion = await newQuestion.loadRandom(db, history);
++
++					if (!randomQuestion) {
++						// No more questions, quiz is over
++						return new Response(
++							JSON.stringify({
++								success: true,
++								game_over: true,
++								final_score: score,
++							}),
++							{
++								headers: { "Content-Type": "application/json" },
++							},
++						);
++					}
++
++					state.history.push(question_id);
++					state.question_id = randomQuestion.id;
++					state.question_difficulty = randomQuestion.difficulty;
++					state.question_start_time = Date.now();
++
++					const newSignedState = await sign(state, env.QUIZ_SECRET);
++
++					// biome-ignore lint/correctness/noUnusedVariables: <explanation>
++					const { answer: correctAnswer, ...questionData } = randomQuestion;
++
++					return new Response(
++						JSON.stringify({
++							success: true,
++							question: questionData,
++							state: newSignedState,
++						}),
++						{ headers: { "Content-Type": "application/json" } },
++					);
+ 				} catch (e) {
+ 					return new Response(`Error: ${e.message}`, { status: 500 });
+ 				}
+@@ -38,6 +226,11 @@
+ 					const db = getDB(env);
+ 					const { Quiz } = await import("./db/classes.js");
+ 					const data = await request.json();
++
++					if (!(await verifyAdmin(db, data.email, data.password))) {
++						return new Response("Unauthorized", { status: 401 });
++					}
++
+ 					const quizData = {
+ 						name: data.name,
+ 						score_needed: data.score_needed,
+@@ -48,7 +241,7 @@
+ 					const result = await quiz.create(db);
+ 					if (result.success) {
+ 						return new Response(
+-							JSON.stringify({ success: true, user_id: user.id }),
++							JSON.stringify({ success: true, quiz_id: quiz.id }),
+ 							{ headers: { "Content-Type": "application/json" } },
+ 						);
+ 					} else {
+@@ -69,9 +262,14 @@
+ 					const db = getDB(env);
+ 					const { Question } = await import("./db/classes.js");
+ 					const data = await request.json();
++
++					if (!(await verifyAdmin(db, data.email, data.password))) {
++						return new Response("Unauthorized", { status: 401 });
++					}
++
+ 					const questionData = {
+ 						text: data.text,
+-						country: data.country,
++						answer: data.answer,
+ 						difficulty: data.difficulty,
+ 						score_multiplier: data.score_multiplier,
+ 					};
+@@ -80,7 +278,7 @@
+ 					const result = await question.create(db);
+ 					if (result.success) {
+ 						return new Response(
+-							JSON.stringify({ success: true, user_id: user.id }),
++							JSON.stringify({ success: true, question_id: question.id }),
+ 							{ headers: { "Content-Type": "application/json" } },
+ 						);
+ 					} else {
+@@ -103,16 +301,20 @@
+ 					const db = getDB(env);
+ 					const { Category } = await import("./db/classes.js");
+ 					const data = await request.json();
++
++					if (!(await verifyAdmin(db, data.email, data.password))) {
++						return new Response("Unauthorized", { status: 401 });
++					}
++
+ 					const categoryData = {
+-						create_date: data.create_date,
+-						update_date: data.update_date,
++						name: data.name,
+ 					};
+ 					const category = new Category(categoryData);
+ 
+ 					const result = await category.create(db);
+ 					if (result.success) {
+ 						return new Response(
+-							JSON.stringify({ success: true, user_id: user.id }),
++							JSON.stringify({ success: true, category_id: category.id }),
+ 							{ headers: { "Content-Type": "application/json" } },
+ 						);
+ 					} else {
+@@ -146,7 +348,7 @@
+ 					const result = await resultObject.create(db);
+ 					if (result.success) {
+ 						return new Response(
+-							JSON.stringify({ success: true, user_id: user.id }),
++							JSON.stringify({ success: true, result_id: resultObject.id }),
+ 							{ headers: { "Content-Type": "application/json" } },
+ 						);
+ 					} else {
+@@ -164,6 +366,22 @@
+ 					});
+ 				}
+ 			}
++			case "/quizzes": {
++				if (request.method !== "GET") {
++					return new Response("Method Not Allowed", { status: 405 });
++				}
++				try {
++					const db = getDB(env);
++					const { Quiz } = await import("./db/classes.js");
++					const quiz = new Quiz();
++					const quizzes = await quiz.loadAll(db);
++					return new Response(JSON.stringify({ success: true, quizzes }), {
++						headers: { "Content-Type": "application/json" },
++					});
++				} catch (e) {
++					return new Response(`Error: ${e.message}`, { status: 500 });
++				}
++			}
+ 
+ 			default:
+ 				return new Response("Not Found", { status: 404 });
+Index: src/crypto.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/crypto.js b/src/crypto.js
+new file mode 100644
+--- /dev/null	(date 1759229384633)
++++ b/src/crypto.js	(date 1759229384633)
+@@ -0,0 +1,68 @@
++import { Buffer } from "node:buffer";
++
++// We'll use a simple HMAC-based signing mechanism for state.
++// In a real-world application, you would want to use a more robust
++// asymmetric key system (like RSA or ECDSA), with the private key
++// stored securely as a secret.
++
++// For this example, we'll derive a key from a secret string.
++// This should be a long, random string stored in `env.QUIZ_SECRET`.
++async function getKey(secret) {
++	const secretBuf = new TextEncoder().encode(secret);
++	return crypto.subtle.importKey(
++		"raw",
++		secretBuf,
++		{ name: "HMAC", hash: "SHA-256" },
++		false,
++		["sign", "verify"],
++	);
++}
++
++/**
++ * Signs a piece of data.
++ * @param {object} data The data to sign.
++ * @param {string} secret The secret to sign with.
++ * @returns {Promise<string>} The signed data, as a base64 string.
++ */
++export async function sign(data, secret) {
++	const key = await getKey(secret);
++	const dataStr = JSON.stringify(data);
++	const signature = await crypto.subtle.sign(
++		"HMAC",
++		key,
++		new TextEncoder().encode(dataStr),
++	);
++	const signatureB64 = Buffer.from(signature).toString("base64");
++	const dataB64 = Buffer.from(dataStr).toString("base64");
++	return `${dataB64}.${signatureB64}`;
++}
++
++/**
++ * Verifies a signed piece of data.
++ * @param {string} signedData The signed data, as a base64 string.
++ * @param {string} secret The secret to verify with.
++ * @returns {Promise<object|null>} The original data if the signature is valid, otherwise null.
++ */
++export async function verify(signedData, secret) {
++	const key = await getKey(secret);
++	const [dataB64, signatureB64] = signedData.split(".");
++	if (!dataB64 || !signatureB64) {
++		return null;
++	}
++	try {
++		const signature = Buffer.from(signatureB64, "base64");
++		const dataStr = Buffer.from(dataB64, "base64").toString("utf-8");
++		const isValid = await crypto.subtle.verify(
++			"HMAC",
++			key,
++			signature,
++			new TextEncoder().encode(dataStr),
++		);
++		if (isValid) {
++			return JSON.parse(dataStr);
++		}
++		return null;
++	} catch (e) {
++		return null;
++	}
++}
