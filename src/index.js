@@ -39,9 +39,9 @@ export default {
 					const { Quiz } = await import("./db/classes.js");
 					const data = await request.json();
 					const quizData = {
-						name: data.name || "Placeholder name",
-						score_needed: data.score_needed || "Placeholder name",
-						max_time: data.max_time || "Placeholder name",
+						name: data.name,
+						score_needed: data.score_needed,
+						max_time: data.max_time,
 					};
 					const quiz = new Quiz(quizData);
 
@@ -70,10 +70,10 @@ export default {
 					const { Question } = await import("./db/classes.js");
 					const data = await request.json();
 					const questionData = {
-						text: data.text || "Placeholder",
-						country: data.country || "Placeholder country",
-						difficulty: data.difficulty || "Placeholder",
-						score_multiplier: data.score_multiplier || "Placeholder",
+						text: data.text,
+						country: data.country,
+						difficulty: data.difficulty,
+						score_multiplier: data.score_multiplier,
 					};
 					const question = new Question(questionData);
 
@@ -104,8 +104,8 @@ export default {
 					const { Category } = await import("./db/classes.js");
 					const data = await request.json();
 					const categoryData = {
-						create_date: data.create_date || "Placeholder",
-						update_date: data.update_date || "Placeholder",
+						create_date: data.create_date,
+						update_date: data.update_date,
 					};
 					const category = new Category(categoryData);
 
@@ -136,10 +136,10 @@ export default {
 					const { Result } = await import("./db/classes.js");
 					const data = await request.json();
 					const resultData = {
-						score: data.score || "Placeholder",
-						time_taken: data.time_taken || "Placeholder",
-						create_date: data.create_date || "Placeholder",
-						update_date: data.update_date || "Placeholder",
+						score: data.score,
+						time_taken: data.time_taken,
+						create_date: data.create_date,
+						update_date: data.update_date,
 					};
 					const resultObject = new Result(resultData);
 
