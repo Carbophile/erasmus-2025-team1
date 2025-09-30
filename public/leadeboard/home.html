@@ -17,6 +17,7 @@
             transition: opacity 0.5s ease;
         }
 
+
         .nav {
             position: absolute;
             left: 50%;
@@ -118,6 +119,8 @@
             position: absolute;
             top: 18px;
             right: 18px;
+            font-size: 1.7rem;
+            color: #222;
         }
 
         .quiz-card .desc {
@@ -125,16 +128,6 @@
             font-weight: 400;
             margin-top: 10px;
             color: #444;
-        }
-
-        /* Ikona ključa */
-        .uis--lock {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background-repeat: no-repeat;
-            background-size: 100% 100%;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23E62727' d='M17 9V7c0-2.8-2.2-5-5-5S7 4.2 7 7v2c-1.7 0-3 1.3-3 3v7c0 1.7 1.3 3 3 3h10c1.7 0 3-1.3 3-3v-7c0-1.7-1.3-3-3-3M9 7c0-1.7 1.3-3 3-3s3 1.3 3 3v2H9z'/%3E%3C/svg%3E");
         }
 
         /* Leaderboard styles */
@@ -220,7 +213,7 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        /* Responsiveness */
+        /* TABLET */
         @media (max-width: 1100px) {
             .main-content {
                 gap: 40px;
@@ -244,6 +237,7 @@
             }
         }
 
+        /* MOBILNI */
         @media (max-width: 900px) {
             .main-content {
                 flex-direction: column;
@@ -277,6 +271,7 @@
             }
         }
 
+        /* MALI MOBILNI */
         @media (max-width: 600px) {
             .nav {
                 max-width: 98vw;
@@ -322,6 +317,7 @@
             }
         }
 
+        /* VRLO MALI EKRANI */
         @media (max-width: 400px) {
             .nav {
                 height: 44px;
@@ -367,17 +363,17 @@
                 <div class="desc">Beginner</div>
             </div>
             <div class="quiz-card locked">
-                <span class="lock"><span class="uis--lock"></span></span>
+                <span class="lock">&#128274;</span>
                 Quiz 2
                 <div class="desc">You need 15 Points to unlock</div>
             </div>
             <div class="quiz-card locked">
-                <span class="lock"><span class="uis--lock"></span></span>
+                <span class="lock">&#128274;</span>
                 Quiz 3
                 <div class="desc">You need 30 Points to unlock</div>
             </div>
             <div class="quiz-card locked">
-                <span class="lock"><span class="uis--lock"></span></span>
+                <span class="lock">&#128274;</span>
                 Quiz 4
                 <div class="desc">You need 45 Points to unlock</div>
             </div>
@@ -401,23 +397,26 @@
     </div>
 
     <script>
+        // Funkcija za zatvaranje navbar-a
         function closeNav() {
             document.getElementById('navBar').style.display = 'none';
         }
 
+        // Glatki fade-out prije prelaska na novu stranicu
         const links = document.querySelectorAll('.fade-link');
         links.forEach(link => {
             link.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
-                if (!href || href === '#') return;
-                e.preventDefault();
-                document.body.style.opacity = '0';
+                if (!href || href === '#') return; // ignoriraj prazne linkove
+                e.preventDefault(); // spriječi instantni reload
+                document.body.style.opacity = '0'; // fade out
                 setTimeout(() => {
-                    window.location.href = href;
-                }, 500);
+                    window.location.href = href; // nakon fade-out, promijeni stranicu
+                }, 500); // 500ms, isto kao CSS transition
             });
         });
 
+        // Fade-in efekt prilikom učitavanja stranice
         window.addEventListener('DOMContentLoaded', () => {
             document.body.style.opacity = '1';
         });
