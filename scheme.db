@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"is_admin" TINYINT NOT NULL,
 	"create_date" DATETIME NOT NULL,
 	"update_date" DATETIME NOT NULL,
-	PRIMARY KEY ("id")
+	PRIMARY KEY ("id"),
+	UNIQUE("email")
 );
 
 -- Dumping structure for table migrations.categories
