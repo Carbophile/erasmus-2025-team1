@@ -1,27 +1,11 @@
 import { User } from "./db/classes";
-import { getDB, queryDB } from "./db/db";
+import { getDB } from "./db/db";
 
 // This is nowhere near final, just a skeleton to build upon
 export default {
 	async fetch(request, env, _ctx) {
 		const url = new URL(request.url);
 		switch (url.pathname) {
-			case "/message":
-				return new Response("Hello, World!");
-			case "/random":
-				return new Response(crypto.randomUUID());
-			case "/db-test": {
-				try {
-					const db = getDB(env);
-					const result = await queryDB(db, "SELECT 1 as test");
-					return new Response(JSON.stringify(result), {
-						headers: { "Content-Type": "application/json" },
-					});
-				} catch (e) {
-					return new Response(`DB Error: ${e.message}`, { status: 500 });
-				}
-			}
-
 			case "/user/new": {
 				if (request.method !== "POST") {
 					return new Response("Method Not Allowed", { status: 405 });
