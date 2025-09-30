@@ -271,7 +271,7 @@ export default {
 					});
 				}
 			}
-			
+
 			// route to seed the database with mockup data for testing
 			case "/seed-db": {
 				try {
@@ -281,13 +281,18 @@ export default {
 						["test@example.com", "Test User", "password", 1],
 						["colin@examplecom", "Colin", "password"],
 						["maarten@example.com", "Maarten", "password"],
-						["brandon@example.com", "Brandon", "password"]
-					]
+						["brandon@example.com", "Brandon", "password"],
+					];
 					for (const [email, name, password, is_admin] of users) {
-						const user = new User({ email, name, password, is_admin: is_admin || 0 });
+						const user = new User({
+							email,
+							name,
+							password,
+							is_admin: is_admin || 0,
+						});
 						await user.create(db);
 					}
-					
+
 					seed_msg += "Users created.\n";
 
 					const categories = ["Culture", "History", "Geography", "Language"];
@@ -301,7 +306,7 @@ export default {
 						["Level 1", 5, 30],
 						["Level 2", 7, 45],
 						["Level 3", 9, 60],
-						["Level 4", 12, 90]
+						["Level 4", 12, 90],
 					];
 					for (const [name, score_needed, max_time] of quizzes) {
 						const quiz = new Quiz({ name, score_needed, max_time });
@@ -313,21 +318,93 @@ export default {
 						["What is the capital of Croatia?", 1, 1, "Easy", 1],
 						["What is the capital of the Netherlands?", 1, 1, "Easy", 1],
 						["Which country is famous for its tulip fields?", 1, 3, "Easy", 1],
-						["Which country is known for the traditional dance called 'kolo'?", 1, 1, "Medium", 1],
-						["What is the name of the Dutch national holiday celebrating the king's birthday?", 1, 2, "Medium", 1],
-						["Which Croatian city is famous for its ancient Roman amphitheater?", 1, 1, "Medium", 1],
-						["What is a popular Dutch food made from raw herring?", 1, 3, "Medium", 1],
-						["Which country celebrates Sinterklaas on December 5th?", 1, 2, "Easy", 1],
-						["Which country is known for the tradition of painting Easter eggs called 'pisanice'?", 1, 1, "Easy", 1],
-						["What is the name of the Croatian folk music style characterized by group singing?", 1, 1, "Medium", 1],
-						["Which country is famous for its windmills and canals?", 1, 3, "Easy", 1],
-						["Which country is known for the dish 'pašticada'?", 1, 1, "Medium", 1],
+						[
+							"Which country is known for the traditional dance called 'kolo'?",
+							1,
+							1,
+							"Medium",
+							1,
+						],
+						[
+							"What is the name of the Dutch national holiday celebrating the king's birthday?",
+							1,
+							2,
+							"Medium",
+							1,
+						],
+						[
+							"Which Croatian city is famous for its ancient Roman amphitheater?",
+							1,
+							1,
+							"Medium",
+							1,
+						],
+						[
+							"What is a popular Dutch food made from raw herring?",
+							1,
+							3,
+							"Medium",
+							1,
+						],
+						[
+							"Which country celebrates Sinterklaas on December 5th?",
+							1,
+							2,
+							"Easy",
+							1,
+						],
+						[
+							"Which country is known for the tradition of painting Easter eggs called 'pisanice'?",
+							1,
+							1,
+							"Easy",
+							1,
+						],
+						[
+							"What is the name of the Croatian folk music style characterized by group singing?",
+							1,
+							1,
+							"Medium",
+							1,
+						],
+						[
+							"Which country is famous for its windmills and canals?",
+							1,
+							3,
+							"Easy",
+							1,
+						],
+						[
+							"Which country is known for the dish 'pašticada'?",
+							1,
+							1,
+							"Medium",
+							1,
+						],
 						["What is the Dutch word for 'cheese'?", 1, 2, "Easy", 1],
 						["Which country is home to the city of Split?", 1, 1, "Easy", 1],
-						["Which country is home to the city of Rotterdam?", 1, 2, "Easy", 1]
+						[
+							"Which country is home to the city of Rotterdam?",
+							1,
+							2,
+							"Easy",
+							1,
+						],
 					];
-					for (const [text, quiz_id, category_id, difficulty, score_multiplier] of questions) {
-						const question = new Question({ text, quiz_id, category_id, difficulty, score_multiplier });
+					for (const [
+						text,
+						quiz_id,
+						category_id,
+						difficulty,
+						score_multiplier,
+					] of questions) {
+						const question = new Question({
+							text,
+							quiz_id,
+							category_id,
+							difficulty,
+							score_multiplier,
+						});
 						await question.create(db);
 					}
 					seed_msg += "Questions created.\n";
@@ -373,7 +450,7 @@ export default {
 						[8, "Croatia", false],
 						[8, "Belgium", false],
 						[8, "Germany", false],
-						// 9: Which country is known for the tradition of painting Easter eggs called 'pisanice'? 
+						// 9: Which country is known for the tradition of painting Easter eggs called 'pisanice'?
 						[9, "Croatia", true],
 						[9, "Netherlands", false],
 						[9, "Poland", false],
@@ -388,12 +465,12 @@ export default {
 						[11, "Croatia", false],
 						[11, "Belgium", false],
 						[11, "France", false],
-						// 12: Which country is known for the dish 'pašticada'? 
+						// 12: Which country is known for the dish 'pašticada'?
 						[12, "Croatia", true],
 						[12, "Netherlands", false],
 						[12, "Italy", false],
 						[12, "France", false],
-						// 13: What is the Dutch word for 'cheese'? 
+						// 13: What is the Dutch word for 'cheese'?
 						[13, "Kaas", true],
 						[13, "Fromage", false],
 						[13, "Sir", false],
@@ -407,7 +484,7 @@ export default {
 						[15, "Netherlands", true],
 						[15, "Croatia", false],
 						[15, "Belgium", false],
-						[15, "Germany", false]
+						[15, "Germany", false],
 					];
 					for (const [question_id, option, correct] of options) {
 						const opt = new Option({ question_id, option, correct });
@@ -419,7 +496,7 @@ export default {
 						[1, 1, 8, 50],
 						[2, 2, 7, 70],
 						[3, 3, 6, 40],
-						[4, 4, 5, 25]
+						[4, 4, 5, 25],
 					];
 					for (const [user_id, quiz_id, score, time_taken] of results) {
 						const result = new Result({ user_id, quiz_id, score, time_taken });
@@ -427,8 +504,6 @@ export default {
 					}
 					seed_msg += "Results created.\n";
 
-
-					
 					seed_msg += "Database seeding completed.\n";
 					return new Response(`${seed_msg}Done!`);
 				} catch (e) {
@@ -436,7 +511,7 @@ export default {
 						status: 500,
 					});
 				}
-			} 
+			}
 			default:
 				return new Response("Not Found", { status: 404 });
 		}
