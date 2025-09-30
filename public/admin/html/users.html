@@ -1,137 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>QuizBattle Admin</title>
-		<link rel="stylesheet" href="../css/styleQuizCrud.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-		/>
-	</head>
+<head>
+    <meta charset="UTF-8">
+    <title>QuizBattle Admin</title>
+    <link rel="stylesheet" href="styleQuizCrud.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="logo">QuizBattle</div>
+    <nav>
+        <a href="/admin/users" class="active"><i class="fa-solid fa-users"></i><span>Users</span></a>
+        <a href="/admin/questions"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+    </nav>
+</aside>
 
-	<body>
-		<aside class="sidebar">
-			<div class="logo">QuizBattle</div>
-			<nav>
-				<a href="/admin/html/users" class="active"
-					><i class="fa-solid fa-users"></i><span>Users</span></a
-				>
-				<a href="/admin/html/questions"
-					><i class="fa-solid fa-question"></i><span>Questions</span></a
-				>
-			</nav>
-		</aside>
+<div class="main">
+    <header class="topbar">
+        <div class="nav-left">
+            <button class="btn">Home</button>
+            <button class="btn">Leaderboard</button>
+        </div>
+        <div class="search-box">
+            <input type="text" placeholder="Search...">
+            <i class="fa fa-search"></i>
+        </div>
+        <div class="nav-right">
+            <i class="fa-solid fa-user user-icon"></i>
+        </div>
+    </header>
 
-		<div class="main">
-			<header class="topbar">
-				<div class="nav-left">
-					<button class="btn">Home</button>
-					<button class="btn">Leaderboard</button>
-				</div>
-				<div class="search-box">
-					<input type="text" placeholder="Search..." />
-					<i class="fa fa-search"></i>
-				</div>
-				<div class="nav-right">
-					<i class="fa-solid fa-user user-icon"></i>
-				</div>
-			</header>
+    <section class="table-section">
+        <div class="table-header">
+            <h2>Users</h2>
+            <button class="btn add-btn"><i class="fa fa-plus"></i> Add</button>
+        </div>
 
-			<section class="table-section">
-				<div class="table-header">
-					<h2>Users</h2>
-					<button class="btn add-btn"><i class="fa fa-plus"></i> Add</button>
-				</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Score</th>
+                    <th>Results</th>
+                    <th>Admin</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+                </thead>
+                <tbody id="user-table-body">
+                <!-- Filled by JS -->
+                </tbody>
+            </table>
+        </div>
 
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Id</th>
-								<th>Name</th>
-								<th>Email</th>
-								<th>Score</th>
-								<th>Results</th>
-								<th>Admin</th>
-								<th>Edit</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="user-table-body">
-							<!-- Filled by JS -->
-						</tbody>
-					</table>
-				</div>
+        <div class="pagination">
+            <button>&laquo;</button>
+            <button>&lsaquo;</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>&rsaquo;</button>
+            <button>&raquo;</button>
+        </div>
+    </section>
+</div>
 
-				<div class="pagination">
-					<button>&laquo;</button>
-					<button>&lsaquo;</button>
-					<button class="active">1</button>
-					<button>2</button>
-					<button>3</button>
-					<button>&rsaquo;</button>
-					<button>&raquo;</button>
-				</div>
-			</section>
-		</div>
+<script>
+    // Dummy JSON data
+    const users = [
+        {id: 1, name: "Alice Johnson", email: "alice@example.com", score: 250, results: true, admin: true},
+        {id: 2, name: "Bob Smith", email: "bob@example.com", score: 180, results: true, admin: false},
+        {id: 3, name: "Charlie Lee", email: "charlie@example.com", score: 310, results: true, admin: false},
+        {id: 4, name: "Diana Prince", email: "diana@example.com", score: 400, results: true, admin: true}
+    ];
 
-		<script>
-			// Dummy JSON data
-			const users = [
-				{
-					id: 1,
-					name: "Alice Johnson",
-					email: "alice@example.com",
-					score: 250,
-					results: 12,
-					admin: true,
-				},
-				{
-					id: 2,
-					name: "Bob Smith",
-					email: "bob@example.com",
-					score: 180,
-					results: 9,
-					admin: false,
-				},
-				{
-					id: 3,
-					name: "Charlie Lee",
-					email: "charlie@example.com",
-					score: 310,
-					results: 15,
-					admin: false,
-				},
-				{
-					id: 4,
-					name: "Diana Prince",
-					email: "diana@example.com",
-					score: 400,
-					results: 20,
-					admin: true,
-				},
-			];
+    const tableBody = document.getElementById("user-table-body");
 
-			const tableBody = document.getElementById("user-table-body");
+    users.forEach(user => {
+        const row = document.createElement("tr");
 
-			users.forEach((user) => {
-				const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.score}</td>
+            <td>
+                ${user.results
+                ? `<a href="userResult?id=${user.id}" class="btn small">Show</a>`
+                : `<span style="color:#888;">No Results</span>`}
+            </td>
+            <td>${user.admin ? "✔️" : "❌"}</td>
+            <td><button class="btn"><i class="fa fa-edit"></i></button></td>
+            <td><button class="btn"><i class="fa fa-trash"></i></button></td>
+        `;
 
-				row.innerHTML = `
-                <td>${user.id}</td>
-                <td>${user.name}</td>
-                <td>${user.email}</td>
-                <td>${user.score}</td>
-                <td>${user.results}</td>
-                <td>${user.admin ? "✔️" : "❌"}</td>
-				<td><button class="icon-btn"><i class="fa fa-pen"></i></button></td>
-				<td><button class="icon-btn danger"><i class="fa fa-trash"></i></button></td>
-            `;
-
-				tableBody.appendChild(row);
-			});
-		</script>
-	</body>
+        tableBody.appendChild(row);
+    });
+</script>
+</body>
 </html>
+

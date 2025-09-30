@@ -1,94 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="stylesheet" href="../admin/css/userResult.css" />
-        <link rel="stylesheet" href="../admin/css/users.css">
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-		/>
-		<title>Admin</title>
-	</head>
+<head>
+	<meta charset="UTF-8" />
+	<title>User Results</title>
+	<link rel="stylesheet" href="styleQuizCrud.css" />
+	<link
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+	/>
+	<style>
+		.icon-btn.danger {
+			background: #dc3545;
+			color: #fff;
+			border: none;
+			padding: 6px 10px;
+			border-radius: 6px;
+			cursor: pointer;
+		}
+		.table-header h2 span {
+			color: #555;
+			font-weight: normal;
+			font-size: 0.9em;
+			margin-left: 8px;
+		}
+	</style>
+</head>
+<body>
+	<aside class="sidebar">
+		<div class="logo">QuizBattle</div>
+		<nav>
+			<a href="/admin/users" class="active"><i class="fa-solid fa-users"></i><span>Users</span></a>
+			<a href="/admin/questions"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+		</nav>
+	</aside>
 
-	<body>
-    <header>
-        <nav>
-            <div class="logo">
-                <i class="fas fa-user-shield"></i>
-                <span>Admin Panel</span>
-            </div>
+	<div class="main">
+		<header class="topbar">
+			<div class="nav-left">
+				<button class="btn" onclick="window.location.href='index.html'">Home</button>
+				<button class="btn">Leaderboard</button>
+			</div>
+			<div class="nav-right">
+				<i class="fa-solid fa-user user-icon"></i>
+			</div>
+		</header>
 
-            <ul class="navbar">
-                <li class="nav-item"><a href="users.html">Users</a></li>
-                <li class="nav-item"><a href="userResult.html">UserResult</a></li>
-            </ul>
+		<section class="table-section">
+			<div class="table-header">
+				<h2 id="results-title">User Results</h2>
+			</div>
 
-            <div class="profile">
-                <i class="fas fa-user-circle"></i>
-                <span>Profile</span>
-            </div>
-        </nav>
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Result Id</th>
+							<th>Score</th>
+							<th>Time Taken</th>
+							<th>Quiz Id</th>
+							<th>Date</th>
+							<th>Delete</th>
+						</tr>
+					</thead>
+					<tbody id="results-table-body">
+						<!-- Filled dynamically -->
+					</tbody>
+				</table>
+			</div>
+		</section>
+	</div>
 
-    </header>
-    <div class="main-layout">
-        <div class="sidebar">
-            <button class="sidebar-btn active">Users</button>
-            <button class="sidebar-btn">Questions</button>
-        </div>
+	<script>
+		// Dummy user data (so we can show their name)
+		const users = {
+			1: { id: 1, name: "Alice Johnson" },
+			2: { id: 2, name: "Bob Smith" },
+			3: { id: 3, name: "Charlie Lee" },
+			4: { id: 4, name: "Diana Prince" }
+		};
 
-        <div class="content">
-            <div class="content-header">
-                <button class="back-btn">←</button>
-                <div class="breadcrumb">
-                    <a href="users">Users</a> › Results
-                </div>
-            </div>
+		// Dummy results data
+		const allResults = {
+			1: [
+				{ id: 101, score: 85, time: "02:30", quizId: 1, date: "2025-09-20" },
+				{ id: 102, score: 92, time: "01:50", quizId: 2, date: "2025-09-21" }
+			],
+			2: [
+				{ id: 201, score: 76, time: "03:10", quizId: 1, date: "2025-09-19" }
+			],
+			3: [
+				{ id: 301, score: 65, time: "04:05", quizId: 3, date: "2025-09-22" }
+			],
+			4: [] // Diana has no results
+		};
 
-             Results Table 
-            <div class="table-container">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Score</th>
-                            <th>Time taken</th>
-                            <th>Quiz Id</th>
-                            <th>Date</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-tbody">
-                    </tbody>
-                </table>
-                <div id="loading-state" style="display: none; padding: 40px; text-align: center; color: #666;">
-                    Loading results...
-                </div>
-                <div id="empty-state" style="display: none; padding: 40px; text-align: center; color: #666;">
-                    No quiz results found.
-                </div>
-            </div>
-        </div>
-    </div>
+		// Get user id from URL
+		const params = new URLSearchParams(window.location.search);
+		const userId = params.get("id");
 
-    <script>
-        function deleteResult(id) {
-            if (confirm('Are you sure you want to delete this quiz result?')) {
-                // Here you would make an API call to delete the result
-                console.log('Deleting result with ID:', id);
-                // Remove the row from the table
-                event.target.closest('tr').remove();
-            }
-        }
+		const resultsTable = document.getElementById("results-table-body");
+		const resultsTitle = document.getElementById("results-title");
 
-        // Add click handlers for navigation
-        document.querySelectorAll('.sidebar-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    </script>
-	</body>
+		// Show user's name in title
+		if (userId && users[userId]) {
+			resultsTitle.textContent = `Results for ${users[userId].name}`;
+		}
+
+		// Fill results table
+		if (userId && allResults[userId] && allResults[userId].length > 0) {
+			allResults[userId].forEach(res => {
+				const row = document.createElement("tr");
+
+				row.innerHTML = `
+					<td>${res.id}</td>
+					<td>${res.score}</td>
+					<td>${res.time}</td>
+					<td>${res.quizId}</td>
+					<td>${res.date}</td>
+					<td><button class="icon-btn danger" onclick="deleteResult(${userId}, ${res.id}, this)"><i class="fa fa-trash"></i></button></td>
+				`;
+
+				resultsTable.appendChild(row);
+			});
+		} else {
+			resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results found for this user.</td></tr>`;
+		}
+
+		function deleteResult(userId, resultId, btn) {
+			allResults[userId] = allResults[userId].filter(r => r.id !== resultId);
+			btn.closest("tr").remove();
+
+			if (allResults[userId].length === 0) {
+				resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results left for this user.</td></tr>`;
+			}
+		}
+
+	function deleteResult(userId, resultId, btn) {
+		if (!confirm("⚠️ Are you sure you want to delete this result? This action cannot be undone.")) {
+			return;
+		}
+
+		allResults[userId] = allResults[userId].filter(r => r.id !== resultId);
+
+		btn.closest("tr").remove();
+
+		if (allResults[userId].length === 0) {
+			resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results left for this user.</td></tr>`;
+		}
+	}
+	</script>
+</body>
 </html>
