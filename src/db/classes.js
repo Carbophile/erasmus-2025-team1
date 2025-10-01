@@ -222,7 +222,7 @@ export class Question {
 		return [];
 	}
 
-	async loadfromcountry(db, country) {
+	async loadFromCountry(db, country) {
 		const sql = `SELECT * FROM questions WHERE country = ?`;
 		const result = await queryDB(db, sql, [country]);
 		if (result?.results && result.results.length > 0) {
