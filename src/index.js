@@ -308,18 +308,26 @@ export default {
 						["Level 3", 9, 60],
 						["Level 4", 12, 90],
 					];
-					for (const [name, score_needed, max_time] of quizzes) {
-						const quiz = new Quiz({ name, score_needed, max_time });
+					for (const [name, country, score_needed, max_time] of quizzes) {
+						const quiz = new Quiz({ name, country, score_needed, max_time });
 						await quiz.create(db);
 					}
 					seed_msg += "Quizzes created.\n";
 
 					const questions = [
-						["What is the capital of Croatia?", 1, 1, "Easy", 1],
-						["What is the capital of the Netherlands?", 1, 1, "Easy", 1],
-						["Which country is famous for its tulip fields?", 1, 3, "Easy", 1],
+						["What is the capital of Croatia?", "HR", 1, 1, "Easy", 1],
+						["What is the capital of the Netherlands?", "NL", 1, 1, "Easy", 1],
+						[
+							"Which country is famous for its tulip fields?",
+							"NL",
+							1,
+							3,
+							"Easy",
+							1,
+						],
 						[
 							"Which country is known for the traditional dance called 'kolo'?",
+							"HR",
 							1,
 							1,
 							"Medium",
@@ -327,6 +335,7 @@ export default {
 						],
 						[
 							"What is the name of the Dutch national holiday celebrating the king's birthday?",
+							"NL",
 							1,
 							2,
 							"Medium",
@@ -334,6 +343,7 @@ export default {
 						],
 						[
 							"Which Croatian city is famous for its ancient Roman amphitheater?",
+							"HR",
 							1,
 							1,
 							"Medium",
@@ -341,6 +351,7 @@ export default {
 						],
 						[
 							"What is a popular Dutch food made from raw herring?",
+							"NL",
 							1,
 							3,
 							"Medium",
@@ -348,6 +359,7 @@ export default {
 						],
 						[
 							"Which country celebrates Sinterklaas on December 5th?",
+							"NL",
 							1,
 							2,
 							"Easy",
@@ -355,6 +367,7 @@ export default {
 						],
 						[
 							"Which country is known for the tradition of painting Easter eggs called 'pisanice'?",
+							"HR",
 							1,
 							1,
 							"Easy",
@@ -362,6 +375,7 @@ export default {
 						],
 						[
 							"What is the name of the Croatian folk music style characterized by group singing?",
+							"HR",
 							1,
 							1,
 							"Medium",
@@ -369,6 +383,7 @@ export default {
 						],
 						[
 							"Which country is famous for its windmills and canals?",
+							"NL",
 							1,
 							3,
 							"Easy",
@@ -376,15 +391,24 @@ export default {
 						],
 						[
 							"Which country is known for the dish 'pašticada'?",
+							"HR",
 							1,
 							1,
 							"Medium",
 							1,
 						],
-						["What is the Dutch word for 'cheese'?", 1, 2, "Easy", 1],
-						["Which country is home to the city of Split?", 1, 1, "Easy", 1],
+						["What is the Dutch word for 'cheese'?", "NL", 1, 2, "Easy", 1],
+						[
+							"Which country is home to the city of Split?",
+							"HR",
+							1,
+							1,
+							"Easy",
+							1,
+						],
 						[
 							"Which country is home to the city of Rotterdam?",
+							"NL",
 							1,
 							2,
 							"Easy",
