@@ -6,15 +6,12 @@
 		<title>QuizBattle Admin</title>
 		<link rel="stylesheet" href="../admin/css/users.css" />
 		<link rel="stylesheet" href="../admin/css/general.css" />
-
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
 		/>
-
    
 	</head>
-
 	<body>
 		<aside class="sidebar">
 			<div class="logo">QuizBattle</div>
@@ -27,29 +24,26 @@
 				>
 			</nav>
 		</aside>
-
      <div class="main">
 		<header class="topbar">
 				<div class="nav-left">
-					<button class="btn">Home</button>
-					<button class="btn">Leaderboard</button>
+					<a href="../index.html"><button class="btn" onclick="window.location.href='index.html'">Home</button></a>
+					<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
 				</div>
 				<div class="search-box">
 					<input type="text" placeholder="Search..." />
 					<i class="fa fa-search"></i>
 				</div>
 				<div class="nav-right">
-					<i class="fa-solid fa-user user-icon"></i>
+					<a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
 				</div>
 			</header>
-			
 
   <section class="table-section">
     <div class="table-header">
       <h2>Users</h2>
       <button class="btn add-btn" onclick="openForm()"><i class="fa fa-plus"></i> Add</button>
     </div>
-
     <div class="table-container">
       <table>
         <thead>
@@ -70,7 +64,6 @@
   </section>
   </div>
 </div>
-
 <!-- Popup: Add/Edit User -->
 <div class="overlay" id="form-overlay">
   <div class="card">
@@ -98,7 +91,6 @@
     <button class="close-btn" onclick="closeOverlay('form-overlay')">Close</button>
   </div>
 </div>
-
 <!-- Popup: Delete Confirmation -->
 <div class="overlay" id="delete-overlay">
   <div class="card">
@@ -110,7 +102,6 @@
     </div>
   </div>
 </div>
-
 <script>
   let users = [
     {id: 1, name: "Alice Johnson", email: "alice@example.com", score: 250, results: true, admin: true},
@@ -118,14 +109,12 @@
     {id: 3, name: "Charlie Lee", email: "charlie@example.com", score: 310, results: true, admin: false},
     {id: 4, name: "Diana Prince", email: "diana@example.com", score: 400, results: true, admin: true}
   ];
-
   const tableBody = document.getElementById("user-table-body");
   const formOverlay = document.getElementById("form-overlay");
   const form = document.getElementById("user-form");
   const formTitle = document.getElementById("form-title");
   const submitBtn = form.querySelector(".submit-btn");
   let deleteTarget = null;
-
   function renderTable() {
     tableBody.innerHTML = "";
     users.forEach(user => {
@@ -144,7 +133,6 @@
     });
   }
   renderTable();
-
   function openForm(id = null) {
     form.reset();
     if (id) {
@@ -163,7 +151,6 @@
     }
     formOverlay.style.display = "flex";
   }
-
   form.addEventListener("submit", e => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
@@ -191,12 +178,10 @@
     renderTable();
     closeOverlay("form-overlay");
   });
-
   function openDelete(id) {
     deleteTarget = id;
     document.getElementById("delete-overlay").style.display = "flex";
   }
-
   function confirmDelete() {
     if (!deleteTarget) return;
     users = users.filter(u => u.id !== deleteTarget);
@@ -204,7 +189,6 @@
     closeOverlay("delete-overlay");
     deleteTarget = null;
   }
-
   function closeOverlay(id) {
     document.getElementById(id).style.display = "none";
   }

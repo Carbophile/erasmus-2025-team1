@@ -3,153 +3,13 @@
 	<head>
 		<meta charset="UTF-8" />
 		<title>QuizBattle Admin</title>
-		<link rel="stylesheet" href="styleQuizCrud.css" />
+		<link rel="stylesheet" href="../admin/css/questions.css" />
+		<link rel="stylesheet" href="../admin/css/general.css" />
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
 		/>
-		<style>
-			.overlay {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(0, 0, 0, 0.6);
-				display: none;
-				justify-content: center;
-				align-items: center;
-				z-index: 1000;
-			}
-			.card {
-				background: #fff;
-				border-radius: 12px;
-				padding: 20px;
-				width: 400px;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-				animation: fadeIn 0.3s ease-in-out;
-			}
-			.card h3 {
-				margin-top: 0;
-				font-size: 18px;
-			}
-			.options-list {
-				list-style: none;
-				padding: 0;
-				margin: 10px 0;
-			}
-			.options-list li {
-				padding: 8px;
-				border: 1px solid #ddd;
-				border-radius: 8px;
-				margin-bottom: 8px;
-			}
-			.options-list li.correct {
-				background: #d1ffd6;
-				border-color: #28a745;
-				font-weight: bold;
-			}
-			.close-btn {
-				display: block;
-				margin-top: 15px;
-				padding: 10px;
-				background: #ef4444;
-				color: #fff;
-				border: none;
-				border-radius: 8px;
-				cursor: pointer;
-				width: 100%;
-				font-size: 14px;
-				transition: background 0.2s ease-in-out;
-			}
-			.close-btn:hover {
-				background: #dc2626;
-			}
-      		.cancel-btn {
-				display: block;
-				margin-top: 15px;
-				padding: 10px;
-				background: #1c6ba0;
-				color: #fff;
-				border: none;
-				border-radius: 8px;
-				cursor: pointer;
-				width: 100%;
-				font-size: 14px;
-				transition: background 0.2s ease-in-out;
-			}
-			.cancel-btn:hover {
-				background: #1e3a8a;
-			}
-			.confirm-btn {
-				display: block;
-				margin-top: 15px;
-				padding: 10px;
-				background: #dc3545;
-				color: #fff;
-				border: none;
-				border-radius: 8px;
-				cursor: pointer;
-				width: 100%;
-				font-size: 14px;
-				transition: background 0.2s ease-in-out;
-			}
-			.confirm-btn:hover {
-				background: #c82333;
-			}
-			.button-row {
-				display: flex;
-				justify-content: space-between;
-				gap: 10px;
-			}
-			.form-group {
-				margin-bottom: 10px;
-			}
-			.form-group label {
-				display: block;
-				margin-bottom: 5px;
-			}
-			.form-group input,
-			.form-group select {
-				width: 100%;
-				padding: 8px;
-				border: 1px solid #ccc;
-				border-radius: 6px;
-				font-size: 14px;
-				background: #fff;
-			}
-			.form-group select:focus,
-			.form-group input:focus {
-				outline: none;
-				border-color: #28a745;
-				box-shadow: 0 0 4px rgba(40, 167, 69, 0.4);
-			}
-			.submit-btn {
-				background: #28a745;
-				color: #fff;
-				padding: 10px;
-				border: none;
-				border-radius: 8px;
-				cursor: pointer;
-				width: 100%;
-				margin-top: 10px;
-				font-size: 14px;
-				transition: background 0.2s ease-in-out;
-			}
-      		.submit-btn:hover {
-        		background: #15803d;
-      		}
-			@keyframes fadeIn {
-				from {
-					opacity: 0;
-					transform: scale(0.9);
-				}
-				to {
-					opacity: 1;
-					transform: scale(1);
-				}
-			}
-		</style>
+		<style></style>
 	</head>
 	<body>
 		<aside class="sidebar">
@@ -163,19 +23,20 @@
 				>
 			</nav>
 		</aside>
-
 		<div class="main">
 			<header class="topbar">
 				<div class="nav-left">
-					<button class="btn">Home</button>
-					<button class="btn">Leaderboard</button>
+					<a href="../index.html"><button class="btn" onclick="window.location.href='index.html'">Home</button></a>
+					<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
 				</div>
 				<div class="search-box">
 					<input type="text" placeholder="Search..." />
 					<i class="fa fa-search"></i>
 				</div>
 				<div class="nav-right">
-					<i class="fa-solid fa-user user-icon"></i>
+					<a href="../profil/profil.html"
+						><i class="fa-solid fa-user user-icon"></i
+					></a>
 				</div>
 			</header>
 
@@ -205,7 +66,6 @@
 				</div>
 			</section>
 		</div>
-
 		<!-- Popup: View answers -->
 		<div class="overlay" id="view-overlay">
 			<div class="card" id="answer-card">
@@ -216,7 +76,6 @@
 				</button>
 			</div>
 		</div>
-
 		<!-- Popup: Add/Edit Form -->
 		<div class="overlay" id="form-overlay">
 			<div class="card">
@@ -257,7 +116,6 @@
 				</button>
 			</div>
 		</div>
-
 		<!-- Popup: Delete Confirmation -->
 		<div class="overlay" id="delete-overlay">
 			<div class="card">
@@ -271,7 +129,6 @@
 				</div>
 			</div>
 		</div>
-
 		<script>
 			let questions = [
 				{
@@ -293,14 +150,12 @@
 					quizId: 2,
 				},
 			];
-
 			const tableBody = document.getElementById("questions-table-body");
 			const formOverlay = document.getElementById("form-overlay");
 			const form = document.getElementById("question-form");
 			const formTitle = document.getElementById("form-title");
 			const submitBtn = form.querySelector(".submit-btn");
 			let deleteTarget = null;
-
 			function renderTable() {
 				tableBody.innerHTML = "";
 				questions.forEach((q) => {
@@ -319,7 +174,6 @@
 				});
 			}
 			renderTable();
-
 			// Show answers
 			function showAnswers(id) {
 				const q = questions.find((q) => q.id === id);
@@ -335,7 +189,6 @@
 				});
 				document.getElementById("view-overlay").style.display = "flex";
 			}
-
 			// Open Add/Edit form
 			function openForm(id = null) {
 				form.reset();
@@ -357,12 +210,10 @@
 				}
 				formOverlay.style.display = "flex";
 			}
-
 			// Close overlay
 			function closeOverlay(id) {
 				document.getElementById(id).style.display = "none";
 			}
-
 			// Submit handler (add or edit)
 			form.addEventListener("submit", (e) => {
 				e.preventDefault();
@@ -375,7 +226,6 @@
 					.split(",")
 					.map((o) => o.trim())
 					.filter((o) => o);
-
 				if (data.id) {
 					// Edit
 					const idx = questions.findIndex((q) => q.id == data.id);
@@ -406,7 +256,6 @@
 				renderTable();
 				closeOverlay("form-overlay");
 			});
-
 			// Open delete confirmation
 			function openDelete(id, type) {
 				deleteTarget = { id, type };
@@ -416,7 +265,6 @@
 				).textContent = `Are you sure you want to delete this ${type}?`;
 				document.getElementById("delete-overlay").style.display = "flex";
 			}
-
 			// Confirm delete
 			function confirmDelete() {
 				if (!deleteTarget) return;

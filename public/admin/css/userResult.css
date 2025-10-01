@@ -3,12 +3,10 @@
 	padding: 0;
 	box-sizing: border-box;
 }
-
 body {
 	font-family: Arial, sans-serif;
 	background-color: #f5f5f5;
 }
-
 /* Browser Header */
 .browser-header {
 	background-color: #e0e0e0;
@@ -18,12 +16,10 @@ body {
 	align-items: center;
 	gap: 8px;
 }
-
 .browser-controls {
 	display: flex;
 	gap: 8px;
 }
-
 .browser-btn {
 	width: 24px;
 	height: 24px;
@@ -31,14 +27,12 @@ body {
 	background: #f0f0f0;
 	cursor: pointer;
 }
-
 .url-bar {
 	flex: 1;
 	padding: 4px 8px;
 	border: 1px solid #999;
 	margin: 0 8px;
 }
-
 .search-btn {
 	width: 60px;
 	height: 24px;
@@ -46,7 +40,6 @@ body {
 	background: #f0f0f0;
 	border-radius: 12px;
 }
-
 /* App Header */
 .app-header {
 	background-color: white;
@@ -57,24 +50,27 @@ body {
 	align-items: center;
 }
 
+.sidebar .logo {
+	font-size: 1.6em;
+	font-weight: bold;
+	margin-bottom: 30px;
+	text-align: center;
+}
 
 .top-nav {
 	display: flex;
 	gap: 8px;
 }
-
 .nav-btn {
 	padding: 8px 16px;
 	border: 1px solid #333;
 	background: white;
 	cursor: pointer;
 }
-
 .nav-btn.active {
 	background: #333;
 	color: white;
 }
-
 .user-profile {
 	width: 32px;
 	height: 32px;
@@ -85,13 +81,11 @@ body {
 	justify-content: center;
 	color: white;
 }
-
 /* Main Layout */
 .main-layout {
 	display: flex;
 	height: calc(100vh - 120px);
 }
-
 /* Sidebar */
 .sidebar {
 	width: 120px;
@@ -99,7 +93,6 @@ body {
 	border-right: 1px solid #ddd;
 	padding: 20px 0;
 }
-
 .sidebar-btn {
 	display: block;
 	width: 80px;
@@ -112,25 +105,21 @@ body {
 	text-decoration: none;
 	color: #333;
 }
-
 .sidebar-btn.active {
 	background: #333;
 	color: white;
 }
-
 /* Content Area */
 .content {
 	flex: 1;
 	padding: 20px;
 }
-
 .content-header {
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	margin-bottom: 20px;
 }
-
 .back-btn {
 	width: 32px;
 	height: 32px;
@@ -141,28 +130,23 @@ body {
 	align-items: center;
 	justify-content: center;
 }
-
 .breadcrumb {
 	font-size: 16px;
 	color: #333;
 }
-
 .breadcrumb a {
 	color: #0066cc;
 	text-decoration: none;
 }
-
 /* Results Table Container */
 .table-container {
 	background: white;
 	height: calc(100vh - 240px);
 }
-
 .results-table {
 	width: 100%;
 	border-collapse: collapse;
 }
-
 .results-table th {
 	background: #f8f8f8;
 	padding: 12px;
@@ -170,16 +154,13 @@ body {
 	border-bottom: 1px solid #ddd;
 	font-weight: normal;
 }
-
 .results-table td {
 	padding: 12px;
 	border-bottom: 1px solid #eee;
 }
-
 .results-table tr:hover {
 	background: #f9f9f9;
 }
-
 .delete-btn {
 	background: none;
 	border: none;
@@ -187,7 +168,6 @@ body {
 	font-size: 16px;
 	padding: 4px;
 }
-
 .delete-btn:hover {
 	background: #f0f0f0;
 	border-radius: 4px;
@@ -246,13 +226,11 @@ body {
 .cancel-btn:hover {
 	background: #1e3a8a;
 }
-
 /* Responsive */
 @media (max-width: 768px) {
 	.main-layout {
 		flex-direction: column;
 	}
-
 	.sidebar {
 		width: 100%;
 		height: auto;
@@ -260,7 +238,6 @@ body {
 		padding: 10px;
 		overflow-x: auto;
 	}
-
 	.sidebar-btn {
 		margin: 0 6px 0 0;
 		white-space: nowrap;
