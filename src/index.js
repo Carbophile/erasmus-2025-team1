@@ -315,91 +315,108 @@ export default {
 					seed_msg += "Quizzes created.\n";
 
 					const questions = [
-						["What is the capital of Croatia?", 1, 1, "Easy", 1],
-						["What is the capital of the Netherlands?", 1, 1, "Easy", 1],
-						["Which country is famous for its tulip fields?", 1, 3, "Easy", 1],
+						["What is the capital of Croatia?", "HR", 1, 1, 1, 1],
+						["What is the capital of the Netherlands?", "NL", 1, 1, 1, 1],
+						["Which country is famous for its tulip fields?", "NL", 1, 3, 2, 1],
 						[
 							"Which country is known for the traditional dance called 'kolo'?",
+							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
 							"What is the name of the Dutch national holiday celebrating the king's birthday?",
+							"NL",
 							1,
 							2,
-							"Medium",
+							2,
 							1,
 						],
 						[
 							"Which Croatian city is famous for its ancient Roman amphitheater?",
+							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
 							"What is a popular Dutch food made from raw herring?",
+							"NL",
 							1,
 							3,
-							"Medium",
+							2,
 							1,
 						],
 						[
 							"Which country celebrates Sinterklaas on December 5th?",
+							"NL",
 							1,
 							2,
-							"Easy",
+							1,
 							1,
 						],
 						[
 							"Which country is known for the tradition of painting Easter eggs called 'pisanice'?",
+							"HR",
 							1,
 							1,
-							"Easy",
+							1,
 							1,
 						],
 						[
 							"What is the name of the Croatian folk music style characterized by group singing?",
+							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
 							"Which country is famous for its windmills and canals?",
+							"NL",
 							1,
 							3,
-							"Easy",
+							1,
 							1,
 						],
 						[
 							"Which country is known for the dish 'pašticada'?",
+							"HR",
 							1,
 							1,
-							"Medium",
+							1,
 							1,
 						],
-						["What is the Dutch word for 'cheese'?", 1, 2, "Easy", 1],
-						["Which country is home to the city of Split?", 1, 1, "Easy", 1],
+						["What is the Dutch word for 'cheese'?", "NL", 1, 2, "Easy", 1],
+						["Which country is home to the city of Split?", "HR", 1, 1, 1, 1],
 						[
 							"Which country is home to the city of Rotterdam?",
+							"NL",
 							1,
 							2,
-							"Easy",
+							1,
 							1,
 						],
 					];
-					for (const [
+					for (var [
 						text,
+						country,
 						quiz_id,
 						category_id,
 						difficulty,
 						score_multiplier,
 					] of questions) {
+						if (country === "HR") {
+							country = 0;
+						} else {
+							country = 1;
+						}
 						const question = new Question({
 							text,
+							country,
 							quiz_id,
 							category_id,
 							difficulty,
@@ -507,7 +524,7 @@ export default {
 					seed_msg += "Database seeding completed.\n";
 					return new Response(`${seed_msg}Done!`);
 				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
+					return new Response(`${seed_msg}\nError: ${e.message}`, {
 						status: 500,
 					});
 				}

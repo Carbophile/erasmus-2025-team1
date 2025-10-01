@@ -221,6 +221,18 @@ export class Question {
 		this.items = [];
 		return [];
 	}
+
+	async loadFromCountry(db, country) {
+		const sql = `SELECT * FROM questions WHERE country = ?`;
+		const result = await queryDB(db, sql, [country]);
+		if (result?.results && result.results.length > 0) {
+			this.items = result.results.map((row) => new Question(row));
+			return this.items;
+		}
+		this.items = [];
+		return [];
+	}
+
 	async loadFromQuiz(db, quiz_id) {
 		const sql = `SELECT * FROM questions WHERE quiz_id = ?`;
 		const result = await queryDB(db, sql, [quiz_id]);
