@@ -303,13 +303,13 @@ export default {
 					seed_msg += "Categories created.\n";
 
 					const quizzes = [
-						["Level 1", 5, 30, 30],
-						["Level 2", 7, 45, 20],
-						["Level 3", 9, 60, 15],
-						["Level 4", 12, 90, 10],
+						["Level 1", 5, 30],
+						["Level 2", 7, 45],
+						["Level 3", 9, 60],
+						["Level 4", 12, 90],
 					];
-					for (const [name, country, score_needed, max_time] of quizzes) {
-						const quiz = new Quiz({ name, country, score_needed, max_time });
+					for (const [name, score_needed, max_time] of quizzes) {
+						const quiz = new Quiz({ name, score_needed, max_time });
 						await quiz.create(db);
 					}
 					seed_msg += "Quizzes created.\n";
