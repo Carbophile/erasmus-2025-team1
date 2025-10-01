@@ -4,6 +4,8 @@
 import bcrypt from "bcryptjs";
 import { execDB, queryDB } from "./db";
 
+var jwt = require("jsonwebtoken");
+
 export class User {
 	constructor(obj = {}) {
 		this.id = obj.id ?? null;
@@ -25,6 +27,21 @@ export class User {
 		}
 		return false;
 	}
+
+	async authenticate(db, email, password) {
+		const sql = `SELECT * FROM users WHERE email = ?`;
+		const result = await queryDB(db, sql, [email]);
+		if (result?.results && result.results.length > 0) {
+			Object.assign(this, result.results[0]);
+			const user = result.results[0];
+			const valid = await bcrypt.compare(password, user.password);
+			if (valid) {
+				return user;
+			}
+		}
+		return false;
+	}
+
 	async loadAll(db) {
 		const sql = `SELECT * FROM users`;
 		const result = await queryDB(db, sql, []);
@@ -221,10 +238,9 @@ export class Question {
 		this.items = [];
 		return [];
 	}
-
-	async loadFromCountry(db, country) {
-		const sql = `SELECT * FROM questions WHERE country = ?`;
-		const result = await queryDB(db, sql, [country]);
+	async loadFromQuiz(db, quiz_id) {
+		const sql = `SELECT * FROM questions WHERE quiz_id = ?`;
+		const result = await queryDB(db, sql, [quiz_id]);
 		if (result?.results && result.results.length > 0) {
 			this.items = result.results.map((row) => new Question(row));
 			return this.items;
@@ -233,9 +249,9 @@ export class Question {
 		return [];
 	}
 
-	async loadFromQuiz(db, quiz_id) {
-		const sql = `SELECT * FROM questions WHERE quiz_id = ?`;
-		const result = await queryDB(db, sql, [quiz_id]);
+	async loadFromCountry(db, country) {
+		const sql = `SELECT * FROM questions WHERE country = ?`;
+		const result = await queryDB(db, sql, [country]);
 		if (result?.results && result.results.length > 0) {
 			this.items = result.results.map((row) => new Question(row));
 			return this.items;
@@ -492,6 +508,106 @@ export class Result {
 	async delete(db) {
 		if (!this.id) throw new Error("Result id required for delete");
 		const sql = `DELETE FROM results WHERE id=?`;
+		return execDB(db, sql, [this.id]);
+	}
+}
+
+export class Session {
+	constructor(obj = {}) {
+		this.id = obj.id ?? null;
+		this.user = obj.user ?? null;
+		this.token = obj.token ?? null;
+		this.expires_at = obj.expires_at ?? null;
+		this.create_date = obj.create_date ?? null;
+		this.update_date = obj.update_date ?? null;
+	}
+
+	async load(db, id) {
+		const sql = `SELECT * FROM sessions WHERE id = ?`;
+		const result = await queryDB(db, sql, [id]);
+		if (result?.results && result.results.length > 0) {
+			result.results[0].user = new User();
+			await result.results[0].user.load(db, result.results[0].user_id);
+			Object.assign(this, result.results[0]);
+			return true;
+		}
+		return false;
+	}
+
+	async loadByToken(db, token) {
+		const sql = `SELECT * FROM sessions WHERE token = ? AND expires_at > ?`;
+		const result = await queryDB(db, sql, [token, new Date().toISOString()]);
+		if (result?.results && result.results.length > 0) {
+			const sessionData = result.results[0];
+			sessionData.user = new User();
+			await sessionData.user.load(db, sessionData.user_id);
+			Object.assign(this, sessionData);
+			return true;
+		}
+		return false;
+	}
+
+	async create(db) {
+		const now = new Date().toISOString();
+		const sql = `INSERT INTO sessions (user_id, token, expires_at, create_date, update_date) VALUES (?, ?, ?, ?, ?)`;
+		this.expires_at =
+			this.expires_at ||
+			new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+		this.token =
+			this.token ||
+			jwt.sign(
+				{ user_id: this.user.id, name: this.user.name, email: this.user.email },
+				"placeholder secret",
+				{
+					expiresIn: "24h",
+				},
+			);
+
+		const result = await execDB(db, sql, [
+			this.user.id,
+			this.token,
+			this.expires_at,
+			now,
+			now,
+		]);
+		if (result.success) this.id = result.meta.last_row_id;
+		return result;
+	}
+
+	async validate(db) {
+		// checks if the session token is valid and not expired, returns user object if true
+		if (!this.token) throw new Error("Session token required for validate");
+		const sql = `SELECT * FROM sessions WHERE token = ? AND expires_at > ?`;
+		const result = await queryDB(db, sql, [
+			this.token,
+			new Date().toISOString(),
+		]);
+		if (result?.results && result.results.length > 0) {
+			Object.assign(this, result.results[0]);
+			this.user = await User.load(db, this.user_id);
+			if (!this.user) return false;
+			return this.user;
+		}
+		return false;
+	}
+
+	async update(db) {
+		// is probably not necessary but we'll keep it in for gigs and shiggles
+		if (!this.id) throw new Error("Session id required for update");
+		const now = new Date().toISOString();
+		const sql = `UPDATE sessions SET user_id=?, token=?, expires_at=?, update_date=? WHERE id=?`;
+		return execDB(db, sql, [
+			this.user_id,
+			this.token,
+			this.expires_at,
+			now,
+			this.id,
+		]);
+	}
+
+	async delete(db) {
+		if (!this.id) throw new Error("Session id required for delete");
+		const sql = `DELETE FROM sessions WHERE id=?`;
 		return execDB(db, sql, [this.id]);
 	}
 }

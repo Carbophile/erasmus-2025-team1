@@ -1,5 +1,24 @@
-import { Category, Option, Question, Quiz, Result, User } from "./db/classes";
+import {
+	Category,
+	Option,
+	Question,
+	Quiz,
+	Result,
+	Session,
+	User,
+} from "./db/classes";
 import { getDB, queryDB } from "./db/db";
+
+function checkLoggedIn(request) {
+	const cookieHeader = request.headers.get("Cookie");
+	const cookies = Object.fromEntries(
+		cookieHeader?.split("; ").map((c) => {
+			const [key, value] = c.split("=");
+			return [key, value];
+		}) || [],
+	);
+	return !!cookies.session_token;
+}
 
 // This is nowhere near final, just a skeleton to build upon
 export default {
@@ -7,10 +26,15 @@ export default {
 		const url = new URL(request.url);
 		var return_msg = "DB Test:\n";
 		var seed_msg = "DB Seeding:\n";
+		var logged_in = checkLoggedIn(request);
 
 		switch (url.pathname) {
 			case "/message":
-				return new Response("Hello, World!");
+				if (logged_in) {
+					return new Response("Hello, Logged-in User!");
+				} else {
+					return new Response("Not logged in");
+				}
 			case "/random":
 				return new Response(crypto.randomUUID());
 			case "/db-test": {
@@ -25,26 +49,202 @@ export default {
 				}
 			}
 
-			case "/user/new": {
+			case "/user/register": {
 				if (request.method !== "POST") {
 					return new Response("Method Not Allowed", { status: 405 });
 				}
 				try {
 					const db = getDB(env);
 					const data = await request.json();
+					let userExists = new User();
+					userExists = await userExists.loadByEmail(db, data.email);
+
+					if (!data.name || !data.email || !data.password) {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								error: "Missing required fields",
+							}),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					if (userExists) {
+						return new Response(
+							JSON.stringify({ success: false, error: "User already exists" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+
+					if (data.password.length < 6) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Password too short" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					// regex to check for valid email :thumbs_up:
+					const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+					if (!emailRegex.test(data.email)) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Invalid email format" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					if (data.name.length < 3) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Username too short" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					if (data.name.length >= 64) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Username too long" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+
 					const user = new User(data);
 					const result = await user.create(db);
+
 					if (result.success) {
-						return new Response(
-							JSON.stringify({ success: true, user_id: user.id }),
-							{ headers: { "Content-Type": "application/json" } },
-						);
+						const session = new Session({ user });
+						console.log("created new session object");
+
+						await session.create(db);
+
+						console.log("created new session in db");
+						return new Response(JSON.stringify({ session: session }), {
+							headers: {
+								"Content-Type": "application/json",
+								"Set-Cookie": `session_token=${session.token}; Path=/; HttpOnly; Secure; Max-Age=86400`,
+							},
+						});
 					} else {
 						return new Response(
 							JSON.stringify({ success: false, error: "User creation failed" }),
 							{ headers: { "Content-Type": "application/json" }, status: 500 },
 						);
 					}
+				} catch (e) {
+					return new Response(`Error: ${e.message}`, { status: 500 });
+				}
+			}
+
+			case "/user/login": {
+				if (request.method !== "POST") {
+					return new Response("Method Not Allowed", { status: 405 });
+				}
+				try {
+					const db = getDB(env);
+					const data = await request.json();
+					const user = new User();
+					await user.authenticate(db, data.email, data.password);
+
+					if (user.id) {
+						const session = new Session({ user: user });
+						await session.create(db);
+						return new Response(JSON.stringify({ success: true }), {
+							headers: {
+								"Content-Type": "application/json",
+								"Set-Cookie": `session_token=${session.token}; Path=/; HttpOnly; Secure; Max-Age=86400`,
+							},
+						});
+					} else {
+						return new Response(
+							JSON.stringify({
+								success: false,
+								error: "Incorrect email or password.",
+							}),
+							{ headers: { "Content-Type": "application/json" }, status: 500 },
+						);
+					}
+				} catch (e) {
+					return new Response(`Error: ${e.message}`, { status: 500 });
+				}
+			}
+
+			case "/user/logout": {
+				if (request.method !== "POST") {
+					return new Response("Method Not Allowed", { status: 405 });
+				}
+				try {
+					const db = getDB(env);
+					const cookieHeader = request.headers.get("Cookie");
+					const cookies = Object.fromEntries(
+						cookieHeader?.split("; ").map((c) => {
+							const [key, value] = c.split("=");
+							return [key, value];
+						}) || [],
+					);
+					const sessionToken = cookies.session_token;
+
+					if (!sessionToken) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Not logged in" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					const session = new Session();
+					const loaded = await session.loadByToken(db, sessionToken);
+					if (!loaded) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Invalid session" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					await session.delete(db);
+					return new Response(JSON.stringify({ success: true }), {
+						headers: {
+							"Content-Type": "application/json",
+							"Set-Cookie": `session_token=; Path=/; HttpOnly; Secure; Max-Age=0`,
+						},
+					});
+				} catch (e) {
+					return new Response(`Error: ${e.message}`, { status: 500 });
+				}
+			}
+
+			case "/user": {
+				if (request.method !== "GET") {
+					return new Response("Method Not Allowed", { status: 405 });
+				}
+				try {
+					const db = getDB(env);
+					const cookieHeader = request.headers.get("Cookie");
+					const cookies = Object.fromEntries(
+						cookieHeader?.split("; ").map((c) => {
+							const [key, value] = c.split("=");
+							return [key, value];
+						}) || [],
+					);
+					const sessionToken = cookies.session_token;
+					if (!sessionToken) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Not logged in" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					const session = new Session();
+					const loaded = await session.loadByToken(db, sessionToken);
+					if (!loaded) {
+						return new Response(
+							JSON.stringify({ success: false, error: "Invalid session" }),
+							{ headers: { "Content-Type": "application/json" }, status: 400 },
+						);
+					}
+					const user = new User();
+					await user.load(db, session.user.id);
+					return new Response(
+						JSON.stringify({
+							success: true,
+							user: {
+								id: user.id,
+								email: user.email,
+								name: user.name,
+								is_admin: user.is_admin,
+							},
+						}),
+						{ headers: { "Content-Type": "application/json" } },
+					);
 				} catch (e) {
 					return new Response(`Error: ${e.message}`, { status: 500 });
 				}
