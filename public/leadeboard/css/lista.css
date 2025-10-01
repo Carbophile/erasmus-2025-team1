@@ -179,8 +179,8 @@ footer span:hover {
 
 .dropdown-menu {
 	position: absolute;
-    top: 100%;
-    left: 0;
+	top: 100%;
+	left: 0;
 	background-color: white;
 	border: 1px solid #dcdcdc;
 	border-radius: 10px;
@@ -212,5 +212,5 @@ footer span:hover {
 }
 
 .menu-container {
-    position: relative;
+	position: relative;
 }
