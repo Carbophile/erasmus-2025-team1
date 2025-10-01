@@ -17,65 +17,105 @@
             <a href="lista.html" class="fade-link">Leaderboard</a>
         </div>
         <div class="nav-right">
-            <span>→</span>
-            <a href="../login/index.html" class="fade-link">Login</a>
+            <a href="../profil/profil.html" id="user-profile-link" class="fade-link"></a>
+            <a href="#" id="logout-link" class="fade-link">Logout</a>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="quiz-grid">
-            <div class="quiz-card">
-                Quiz 1
-                <div class="desc">Beginner</div>
-            </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
-                Quiz 2
-                <div class="desc">You need 15 Points to unlock</div>
-            </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
-                Quiz 3
-                <div class="desc">You need 30 Points to unlock</div>
-            </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
-                Quiz 4
-                <div class="desc">You need 45 Points to unlock</div>
-            </div>
+        <div class="quiz-grid" id="quiz-grid">
+            <!-- Quiz cards will be inserted here -->
         </div>
         <div class="leaderboard-box">
             <div class="leaderboard-title">Leaderboard Top 5</div>
-            <div class="leaderboard-list">
-                <div class="leaderboard-item active">Number 1</div>
-                <div class="leaderboard-item">Number 2</div>
-                <div class="leaderboard-item">Number 3</div>
-                <div class="leaderboard-item">Number 4</div>
-                <div class="leaderboard-item">Number 5</div>
+            <div class="leaderboard-list" id="leaderboard-list">
+                <!-- Leaderboard items will be inserted here -->
             </div>
             <div class="show-more">Show More</div>
         </div>
     </div>
 
     <script>
-
-        // Glatki fade-out prije prelaska na novu stranicu
-        const links = document.querySelectorAll('.fade-link');
-        links.forEach(link => {
+        // Fade-in/out effects
+        document.querySelectorAll('.fade-link').forEach(link => {
             link.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
-                if (!href || href === '#') return; // ignoriraj prazne linkove
-                e.preventDefault(); // spriječi instantni reload
-                document.body.style.opacity = '0'; // fade out
+                if (!href || href === '#') return;
+                e.preventDefault();
+                document.body.style.opacity = '0';
                 setTimeout(() => {
-                    window.location.href = href; // nakon fade-out, promijeni stranicu
-                }, 500); // 500ms, isto kao CSS transition
+                    window.location.href = href;
+                }, 500);
             });
         });
-
-        // Fade-in efekt prilikom učitavanja stranice
         window.addEventListener('DOMContentLoaded', () => {
             document.body.style.opacity = '1';
+        });
+
+
+        // Auth and data loading
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../login/index.html';
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                document.getElementById('user-profile-link').textContent = user.name;
+            }
+
+            // Fetch quizzes
+            const quizzesResponse = await fetch('/quizzes');
+            const quizzesData = await quizzesResponse.json();
+            if (quizzesData.success) {
+                const quizGrid = document.getElementById('quiz-grid');
+                quizGrid.innerHTML = ''; // Clear static content
+                quizzesData.quizzes.forEach(quiz => {
+                    const quizCard = document.createElement('div');
+                    quizCard.className = 'quiz-card';
+                    // Simple lock logic for demonstration
+                    if (user.total_score < quiz.score_needed) {
+                        quizCard.classList.add('locked');
+                        quizCard.innerHTML = `<span class="lock">&#128274;</span> ${quiz.name} <div class="desc">You need ${quiz.score_needed} Points to unlock</div>`;
+                    } else {
+                        quizCard.innerHTML = `${quiz.name} <div class="desc">Ready to play</div>`;
+                        quizCard.addEventListener('click', () => {
+                            window.location.href = `/questions/questions.html?quiz_id=${quiz.id}`;
+                        });
+                    }
+                    quizGrid.appendChild(quizCard);
+                });
+            }
+
+            // Fetch leaderboard
+            const leaderboardResponse = await fetch('/leaderboard?limit=5');
+            const leaderboardData = await leaderboardResponse.json();
+            if (leaderboardData.success) {
+                const leaderboardList = document.getElementById('leaderboard-list');
+                leaderboardList.innerHTML = ''; // Clear static content
+                leaderboardData.leaderboard.forEach((player, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    if (index === 0) item.classList.add('active');
+                    item.textContent = `${index + 1}. ${player.name} - ${player.total_score}`;
+                    leaderboardList.appendChild(item);
+                });
+            }
+
+            // Logout
+            document.getElementById('logout-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '../login/index.html';
+            });
+
+            // Show more leaderboard
+            document.querySelector('.show-more').addEventListener('click', () => {
+                window.location.href = 'lista.html';
+            });
         });
     </script>
 </body>

@@ -5,10 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4b84f702-2866-4acd-8d28-a4feb5209456" name="Changes" comment="Basic quiz logic">
-      <change afterPath="$PROJECT_DIR$/src/crypto.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/router.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/quiz.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/admin/css/userResult.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/admin/css/userResult.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/admin/html/questions.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/admin/html/questions.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/leadeboard/css/lista.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/leadeboard/css/lista.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/leadeboard/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/leadeboard/home.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/leadeboard/lista.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/leadeboard/lista.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/login/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/login/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/profil/profil.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/profil/profil.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/questions/questions.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/questions/questions.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/classes.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/classes.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -24,14 +31,51 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="33SUbpIwJx3JPbMx5VNBaafkAff" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "git-widget-placeholder": "backend",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "npm.dev.executor": "Run",
     "ts.external.directory.path": "/opt/webstorm/plugins/javascript-plugin/jsLanguageServicesImpl/external"
   }
 }]]></component>
+  <component name="RunManager">
+    <configuration name="dev" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.dev" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-9c94529fcfe0-JavaScript-WS-252.26199.162" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -54,6 +98,9 @@
     </task>
     <option name="localTasksCounter" value="3" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
