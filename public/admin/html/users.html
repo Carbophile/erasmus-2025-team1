@@ -1,104 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>QuizBattle Admin</title>
-  <link rel="stylesheet" href="styleQuizCrud.css">
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
-  <style>
-    /* Same popup and form styles as Questions page */
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      width: 400px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    .card h3 { margin-top: 0; font-size: 18px; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; margin-bottom: 5px; }
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .submit-btn {
-      background: #28a745;
-      color: #fff;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 10px;
-    }
-    .submit-btn:hover { background: #15803d; }
-    .close-btn {
-      display: block;
-      margin-top: 15px;
-      padding: 10px;
-      background: #ef4444;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 14px;
-    }
-    .close-btn:hover { background: #dc2626; }
-    .button-row {
-      display: flex; justify-content: space-between; gap: 10px;
-    }
-    .cancel-btn, .confirm-btn {
-      flex: 1; padding: 10px; border: none; border-radius: 8px;
-      cursor: pointer; font-size: 14px; color: #fff;
-    }
-    .cancel-btn { background: #1c6ba0; }
-    .cancel-btn:hover { background: #1e3a8a; }
-    .confirm-btn { background: #dc3545; }
-    .confirm-btn:hover { background: #c82333; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  </style>
-</head>
-<body>
-<aside class="sidebar">
-  <div class="logo">QuizBattle</div>
-  <nav>
-    <a href="/admin/users" class="active"><i class="fa-solid fa-users"></i><span>Users</span></a>
-    <a href="/admin/questions"><i class="fa-solid fa-question"></i><span>Questions</span></a>
-  </nav>
-</aside>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>QuizBattle Admin</title>
+		<link rel="stylesheet" href="../admin/css/users.css" />
+		<link rel="stylesheet" href="../admin/css/general.css" />
 
-<div class="main">
-  <header class="topbar">
-    <div class="nav-left">
-      <button class="btn">Home</button>
-      <button class="btn">Leaderboard</button>
-    </div>
-    <div class="search-box">
-      <input type="text" placeholder="Search...">
-      <i class="fa fa-search"></i>
-    </div>
-    <div class="nav-right">
-      <i class="fa-solid fa-user user-icon"></i>
-    </div>
-  </header>
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+		/>
+
+   
+	</head>
+
+	<body>
+		<aside class="sidebar">
+			<div class="logo">QuizBattle</div>
+			<nav>
+				<a href="/admin/users" class="active"
+					><i class="fa-solid fa-users"></i><span>Users</span></a
+				>
+				<a href="/admin/questions"
+					><i class="fa-solid fa-question"></i><span>Questions</span></a
+				>
+			</nav>
+		</aside>
+
+     <div class="main">
+		<header class="topbar">
+				<div class="nav-left">
+					<button class="btn">Home</button>
+					<button class="btn">Leaderboard</button>
+				</div>
+				<div class="search-box">
+					<input type="text" placeholder="Search..." />
+					<i class="fa fa-search"></i>
+				</div>
+				<div class="nav-right">
+					<i class="fa-solid fa-user user-icon"></i>
+				</div>
+			</header>
+			
 
   <section class="table-section">
     <div class="table-header">
@@ -124,6 +68,7 @@
       </table>
     </div>
   </section>
+  </div>
 </div>
 
 <!-- Popup: Add/Edit User -->
