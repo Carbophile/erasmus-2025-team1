@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../leadeboard/css/home.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="nav" id="navBar">
+        <div class="nav-left">
+            <a href="home.html" class="fade-link">Home</a>
+            <a href="lista.html" class="fade-link">Leaderboard</a>
+        </div>
+        <div class="nav-right">
+            <span>→</span>
+            <a href="../login/index.html" class="fade-link">Login</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="quiz-grid">
+            <div class="quiz-card">
+                Quiz 1
+                <div class="desc">Beginner</div>
+            </div>
+            <div class="quiz-card locked">
+                <span class="lock">&#128274;</span>
+                Quiz 2
+                <div class="desc">You need 15 Points to unlock</div>
+            </div>
+            <div class="quiz-card locked">
+                <span class="lock">&#128274;</span>
+                Quiz 3
+                <div class="desc">You need 30 Points to unlock</div>
+            </div>
+            <div class="quiz-card locked">
+                <span class="lock">&#128274;</span>
+                Quiz 4
+                <div class="desc">You need 45 Points to unlock</div>
+            </div>
+        </div>
+        <div class="leaderboard-box">
+            <div class="leaderboard-title">Leaderboard Top 5</div>
+            <div class="leaderboard-list">
+                <div class="leaderboard-item active">Number 1</div>
+                <div class="leaderboard-item">Number 2</div>
+                <div class="leaderboard-item">Number 3</div>
+                <div class="leaderboard-item">Number 4</div>
+                <div class="leaderboard-item">Number 5</div>
+            </div>
+            <div class="show-more">Show More</div>
+        </div>
+    </div>
+
+    <script>
+
+        // Glatki fade-out prije prelaska na novu stranicu
+        const links = document.querySelectorAll('.fade-link');
+        links.forEach(link => {
+            link.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (!href || href === '#') return; // ignoriraj prazne linkove
+                e.preventDefault(); // spriječi instantni reload
+                document.body.style.opacity = '0'; // fade out
+                setTimeout(() => {
+                    window.location.href = href; // nakon fade-out, promijeni stranicu
+                }, 500); // 500ms, isto kao CSS transition
+            });
+        });
+
+        // Fade-in efekt prilikom učitavanja stranice
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.style.opacity = '1';
+        });
+    </script>
+</body>
+
+</html>
