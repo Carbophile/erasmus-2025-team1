@@ -303,10 +303,10 @@ export default {
 					seed_msg += "Categories created.\n";
 
 					const quizzes = [
-						["Level 1", 5, 30],
-						["Level 2", 7, 45],
-						["Level 3", 9, 60],
-						["Level 4", 12, 90],
+						["Level 1", 5, 30, 30],
+						["Level 2", 7, 45, 20],
+						["Level 3", 9, 60, 15],
+						["Level 4", 12, 90, 10],
 					];
 					for (const [name, country, score_needed, max_time] of quizzes) {
 						const quiz = new Quiz({ name, country, score_needed, max_time });
@@ -315,22 +315,15 @@ export default {
 					seed_msg += "Quizzes created.\n";
 
 					const questions = [
-						["What is the capital of Croatia?", "HR", 1, 1, "Easy", 1],
-						["What is the capital of the Netherlands?", "NL", 1, 1, "Easy", 1],
-						[
-							"Which country is famous for its tulip fields?",
-							"NL",
-							1,
-							3,
-							"Easy",
-							1,
-						],
+						["What is the capital of Croatia?", "HR", 1, 1, 1, 1],
+						["What is the capital of the Netherlands?", "NL", 1, 1, 1, 1],
+						["Which country is famous for its tulip fields?", "NL", 1, 3, 2, 1],
 						[
 							"Which country is known for the traditional dance called 'kolo'?",
 							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
@@ -338,7 +331,7 @@ export default {
 							"NL",
 							1,
 							2,
-							"Medium",
+							2,
 							1,
 						],
 						[
@@ -346,7 +339,7 @@ export default {
 							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
@@ -354,7 +347,7 @@ export default {
 							"NL",
 							1,
 							3,
-							"Medium",
+							2,
 							1,
 						],
 						[
@@ -362,7 +355,7 @@ export default {
 							"NL",
 							1,
 							2,
-							"Easy",
+							1,
 							1,
 						],
 						[
@@ -370,7 +363,7 @@ export default {
 							"HR",
 							1,
 							1,
-							"Easy",
+							1,
 							1,
 						],
 						[
@@ -378,7 +371,7 @@ export default {
 							"HR",
 							1,
 							1,
-							"Medium",
+							2,
 							1,
 						],
 						[
@@ -386,7 +379,7 @@ export default {
 							"NL",
 							1,
 							3,
-							"Easy",
+							1,
 							1,
 						],
 						[
@@ -394,36 +387,36 @@ export default {
 							"HR",
 							1,
 							1,
-							"Medium",
+							1,
 							1,
 						],
 						["What is the Dutch word for 'cheese'?", "NL", 1, 2, "Easy", 1],
-						[
-							"Which country is home to the city of Split?",
-							"HR",
-							1,
-							1,
-							"Easy",
-							1,
-						],
+						["Which country is home to the city of Split?", "HR", 1, 1, 1, 1],
 						[
 							"Which country is home to the city of Rotterdam?",
 							"NL",
 							1,
 							2,
-							"Easy",
+							1,
 							1,
 						],
 					];
-					for (const [
+					for (var [
 						text,
+						country,
 						quiz_id,
 						category_id,
 						difficulty,
 						score_multiplier,
 					] of questions) {
+						if (country === "HR") {
+							country = 0;
+						} else {
+							country = 1;
+						}
 						const question = new Question({
 							text,
+							country,
 							quiz_id,
 							category_id,
 							difficulty,
@@ -531,7 +524,7 @@ export default {
 					seed_msg += "Database seeding completed.\n";
 					return new Response(`${seed_msg}Done!`);
 				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
+					return new Response(`${seed_msg}\nError: ${e.message}`, {
 						status: 500,
 					});
 				}
