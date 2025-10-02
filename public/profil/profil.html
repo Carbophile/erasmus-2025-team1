@@ -21,115 +21,39 @@
     </div>
 
     <div class="user-info">
-      <span id="user-welcome">Welcome</span>
+      <span>Welcome J. Doe</span>
       <div class="profile-icon">👤</div>
     </div>
-     <a href="#" id="logout-btn" class="logout">Logout ⤴</a>
+     <a href="../login/index.html" class="logout">Logout ⤴</a>
   </header>
+
 
   <main>
     <section class="profile-section">
       <div class="avatar"><img src="../profil/img/icons8-account-male-94.png"></div>
       <div class="info">
-        <div class="points">Points: <strong id="user-points">0</strong></div>
+        <div class="points">Points: <strong>10</strong></div>
         <div class="progress-bar">
-          <div class="fill" id="progress-fill"></div>
+          <div class="fill"></div>
         </div>
-        <p class="join-date">Joined on: <span id="join-date">Loading...</span></p>
+        <p class="join-date">Joined on: 25-09-2025</p>
       </div>
     </section>
 
     <section class="cards">
-      <div id="quiz-results" class="card-container">
-        <!-- Quiz results will be loaded here -->
-      </div>
+      <div class="card a">Quiz 1 - Finished</div>
 
       <div class="card wide stats">
-        <p>🏆 Total Quizzes: <span id="total-quizzes">0</span></p>
-        <p>📈 Best Score: <span id="best-score">0</span></p>
-        <p>🎖️ Average Score: <span id="avg-score">0</span></p>
+        <p>🏆 Total Wins</p>
+        <p>📈 Total Challenge</p>
+        <p>🎖️ Runner up</p>
       </div>
     </section>
   </main>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        window.location.href = '../login/index.html';
-        return;
-      }
-
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-      // Update UI with user data
-      document.getElementById('user-welcome').textContent = `Welcome ${user.name || 'User'}`;
-      document.getElementById('user-points').textContent = user.total_score || 0;
-
-      if (user.create_date) {
-        const joinDate = new Date(user.create_date).toLocaleDateString();
-        document.getElementById('join-date').textContent = joinDate;
-      }
-
-      // Update progress bar (example: progress based on points)
-      const points = user.total_score || 0;
-      const maxPoints = 100; // You can adjust this
-      const progressPercent = Math.min((points / maxPoints) * 100, 100);
-      document.getElementById('progress-fill').style.width = `${progressPercent}%`;
-
-      // Load user's quiz results
-      try {
-        const resultsResponse = await fetch(`/result?user_id=${user.id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const resultsData = await resultsResponse.json();
-
-        if (Array.isArray(resultsData)) {
-          const quizContainer = document.getElementById('quiz-results');
-          quizContainer.innerHTML = '';
-
-          resultsData.forEach(result => {
-            const quizCard = document.createElement('div');
-            quizCard.className = 'card a';
-            quizCard.textContent = `Quiz ${result.quiz_id} - Score: ${result.score}`;
-            quizContainer.appendChild(quizCard);
-          });
-
-          // Update stats
-          if (resultsData.length > 0) {
-            document.getElementById('total-quizzes').textContent = resultsData.length;
-            const scores = resultsData.map(r => r.score);
-            document.getElementById('best-score').textContent = Math.max(...scores);
-            document.getElementById('avg-score').textContent = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading quiz results:', error);
-      }
-
-      // Menu functionality
-      const menuIcon = document.querySelector('.menu-icon');
-      const dropdownMenu = document.querySelector('.dropdown-menu');
-
-      menuIcon.addEventListener('click', () => {
-        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!menuIcon.contains(e.target) && !dropdownMenu.contains(e.target)) {
-          dropdownMenu.style.display = 'none';
-        }
-      });
-
-      // Logout functionality
-      document.getElementById('logout-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '../login/index.html';
-      });
-    });
-  </script>
+  <footer>
+   
+  </footer>
 
 </body>
 
