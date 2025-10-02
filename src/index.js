@@ -184,6 +184,60 @@ router.add("GET", "/leaderboard", async (request, env) => {
 	}
 });
 
+// Add missing collection endpoints
+router.add("GET", "/users", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const user = new User();
+			const users = await user.loadAll(db);
+			// Remove passwords from all users
+			users.forEach((user) => {
+				delete user.password;
+			});
+			return new Response(JSON.stringify({ success: true, users }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("GET", "/questions", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const question = new Question();
+			const questions = await question.loadAll(db);
+			return new Response(JSON.stringify({ success: true, questions }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("GET", "/categories", async (_request, env) => {
+	try {
+		const db = getDB(env);
+		const category = new Category();
+		const categories = await category.loadAll(db);
+		return new Response(JSON.stringify({ success: true, categories }), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
 // QUIZ
 router.add("GET", "/quiz", async (request, env) => {
 	try {
@@ -255,6 +309,10 @@ router.add("POST", "/quiz/start", async (_request, env) => {
 			);
 		}
 
+		// Load options for the question
+		const option = new Option();
+		const options = await option.loadFromQuestion(db, randomQuestion.id);
+
 		const state = {
 			lives: QUIZ_LIVES,
 			score: 0,
@@ -266,12 +324,10 @@ router.add("POST", "/quiz/start", async (_request, env) => {
 
 		const signedState = await sign(state, env.QUIZ_SECRET);
 
-		const { _answer, ...questionData } = randomQuestion;
-
 		return new Response(
 			JSON.stringify({
 				success: true,
-				question: questionData,
+				question: { ...randomQuestion, options },
 				state: signedState,
 			}),
 			{
@@ -323,10 +379,12 @@ router.add("POST", "/quiz/answer", async (request, env) => {
 				);
 			}
 		} else {
-			const question = new Question();
-			await question.load(db, question_id);
+			// Load the correct option for this question
+			const option = new Option();
+			const options = await option.loadFromQuestion(db, question_id);
+			const correctOption = options.find((opt) => opt.correct);
 
-			if (question.answer === answer) {
+			if (correctOption && correctOption.id.toString() === answer.toString()) {
 				state.score += 1 * question_difficulty;
 			} else {
 				state.lives -= 1;
@@ -335,7 +393,11 @@ router.add("POST", "/quiz/answer", async (request, env) => {
 
 		if (state.lives <= 0) {
 			return new Response(
-				JSON.stringify({ success: true, game_over: true, final_score: score }),
+				JSON.stringify({
+					success: true,
+					game_over: true,
+					final_score: state.score,
+				}),
 				{
 					headers: { "Content-Type": "application/json" },
 				},
@@ -347,12 +409,20 @@ router.add("POST", "/quiz/answer", async (request, env) => {
 
 		if (!randomQuestion) {
 			return new Response(
-				JSON.stringify({ success: true, game_over: true, final_score: score }),
+				JSON.stringify({
+					success: true,
+					game_over: true,
+					final_score: state.score,
+				}),
 				{
 					headers: { "Content-Type": "application/json" },
 				},
 			);
 		}
+
+		// Load options for the new question
+		const option = new Option();
+		const newOptions = await option.loadFromQuestion(db, randomQuestion.id);
 
 		state.history.push(question_id);
 		state.question_id = randomQuestion.id;
@@ -361,12 +431,10 @@ router.add("POST", "/quiz/answer", async (request, env) => {
 
 		const newSignedState = await sign(state, env.QUIZ_SECRET);
 
-		const { answer: _correctAnswer, ...questionData } = randomQuestion;
-
 		return new Response(
 			JSON.stringify({
 				success: true,
-				question: questionData,
+				question: { ...randomQuestion, options: newOptions },
 				state: newSignedState,
 			}),
 			{
@@ -430,8 +498,15 @@ router.add("POST", "/quiz/question", (request, env) =>
 				quiz_id: data.quiz_id,
 				category_id: data.category_id,
 				text: data.text || "Placeholder",
-				country: data.country || "Placeholder country",
-				difficulty: data.difficulty || "Medium",
+				country: typeof data.country === "string" ? 0 : data.country || 0,
+				difficulty:
+					typeof data.difficulty === "string"
+						? data.difficulty.toLowerCase() === "easy"
+							? 1
+							: data.difficulty.toLowerCase() === "medium"
+								? 2
+								: 3
+						: data.difficulty || 2,
 				score_multiplier: data.score_multiplier || 1,
 			};
 
@@ -463,7 +538,8 @@ router.add("POST", "/quiz/question", (request, env) =>
 				const optionData = {
 					question_id: question.id,
 					option: opt.option || "Placeholder option",
-					correct: !!opt.correct,
+					// Convert correct to TINYINT (0 or 1) as per schema
+					correct: opt.correct ? 1 : 0,
 				};
 
 				const option = new Option(optionData);

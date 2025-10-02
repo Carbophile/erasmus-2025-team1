@@ -12,7 +12,6 @@ export class User {
 		this.email = obj.email ?? null;
 		this.name = obj.name ?? null;
 		this.password = obj.password ?? null;
-		this.total_score = obj.total_score ?? null;
 		this.is_admin = obj.is_admin ?? null;
 		this.create_date = obj.create_date ?? null;
 		this.update_date = obj.update_date ?? null;
@@ -226,7 +225,7 @@ export class Question {
 		const sql = `SELECT * FROM questions`;
 		const result = await queryDB(db, sql, []);
 		if (result?.results && result.results.length > 0) {
-			this.items = result.results.map((row) => new User(row));
+			this.items = result.results.map((row) => new Question(row));
 			return this.items;
 		}
 		this.items = [];
@@ -579,11 +578,15 @@ export class Session {
 		this.expires_at =
 			this.expires_at ||
 			new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+		// Use environment variable for JWT secret, fallback to placeholder for development
+		const jwtSecret = process.env.JWT_SECRET || "placeholder secret";
+
 		this.token =
 			this.token ||
 			jwt.sign(
 				{ user_id: this.user.id, name: this.user.name, email: this.user.email },
-				"placeholder secret",
+				jwtSecret,
 				{
 					expiresIn: "24h",
 				},
