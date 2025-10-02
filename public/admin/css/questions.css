@@ -10,6 +10,7 @@
 	align-items: center;
 	z-index: 1000;
 }
+
 .card {
 	background: #fff;
 	border-radius: 12px;
@@ -18,26 +19,31 @@
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 	animation: fadeIn 0.3s ease-in-out;
 }
+
 .card h3 {
 	margin-top: 0;
 	font-size: 18px;
 }
+
 .options-list {
 	list-style: none;
 	padding: 0;
 	margin: 10px 0;
 }
+
 .options-list li {
 	padding: 8px;
 	border: 1px solid #ddd;
 	border-radius: 8px;
 	margin-bottom: 8px;
 }
+
 .options-list li.correct {
 	background: #d1ffd6;
 	border-color: #28a745;
 	font-weight: bold;
 }
+
 .close-btn {
 	display: block;
 	margin-top: 15px;
@@ -51,9 +57,11 @@
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .close-btn:hover {
 	background: #dc2626;
 }
+
 .cancel-btn {
 	display: block;
 	margin-top: 15px;
@@ -67,9 +75,11 @@
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .cancel-btn:hover {
 	background: #1e3a8a;
 }
+
 .confirm-btn {
 	display: block;
 	margin-top: 15px;
@@ -83,21 +93,26 @@
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .confirm-btn:hover {
 	background: #c82333;
 }
+
 .button-row {
 	display: flex;
 	justify-content: space-between;
 	gap: 10px;
 }
+
 .form-group {
 	margin-bottom: 10px;
 }
+
 .form-group label {
 	display: block;
 	margin-bottom: 5px;
 }
+
 .form-group input,
 .form-group select {
 	width: 100%;
@@ -107,12 +122,14 @@
 	font-size: 14px;
 	background: #fff;
 }
+
 .form-group select:focus,
 .form-group input:focus {
 	outline: none;
 	border-color: #28a745;
 	box-shadow: 0 0 4px rgba(40, 167, 69, 0.4);
 }
+
 .submit-btn {
 	background: #28a745;
 	color: #fff;
@@ -125,14 +142,23 @@
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
+.error-message {
+	color: #c0392b;
+	font-size: 0.9em;
+	margin-top: 4px;
+}
+
 .submit-btn:hover {
 	background: #15803d;
 }
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
 		transform: scale(0.9);
 	}
+
 	to {
 		opacity: 1;
 		transform: scale(1);
