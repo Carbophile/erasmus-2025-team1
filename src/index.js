@@ -56,29 +56,54 @@ router.add("GET", "/user", async (request, env) => {
 	}
 });
 
-router.add("PUT", "/user", (request, env) =>
-	withAuth(request, env, async (request, env) => {
-		try {
-			const db = getDB(env);
-			const data = await request.json();
-			const userToUpdate = new User(data);
+router.add("PATCH", "/user", (request, env) =>
+  withAuth(request, env, async (request, env) => {
+    try {
+      const db = getDB(env);
+      const data = await request.json();
 
-			// a user can only update their own data, unless they are an admin
-			if (request.user.id !== userToUpdate.id && !request.user.is_admin) {
-				return new Response("Forbidden", { status: 403 });
-			}
+      if (!data.id) return new Response("Missing user id", { status: 400 });
 
-			if (!userToUpdate.id)
-				return new Response("Missing user id", { status: 400 });
-			await userToUpdate.update(db);
-			return new Response(JSON.stringify({ success: true }), {
-				headers: { "Content-Type": "application/json" },
-			});
-		} catch (e) {
-			return new Response(`Error: ${e.message}`, { status: 500 });
-		}
-	}),
+      // Fetch existing user from D1
+      const existingUserResult = await db
+        .prepare("SELECT * FROM users WHERE id = ?")
+        .bind(data.id)
+        .first(); // D1 method for a single row
+
+      if (!existingUserResult) return new Response("User not found", { status: 404 });
+
+      // a user can only update their own data, unless they are an admin
+      if (request.user.id !== existingUserResult.id && !request.user.is_admin) {
+        return new Response("Forbidden", { status: 403 });
+      }
+
+      // Merge existing data with new data
+      const userToUpdate = {
+        id: existingUserResult.id,
+        name: data.name ?? existingUserResult.name,
+        email: data.email ?? existingUserResult.email,
+        password: data.password ?? existingUserResult.password, // keep existing if not provided
+        is_admin: data.is_admin ?? existingUserResult.is_admin,
+      };
+
+      // Update in D1
+      await db
+        .prepare(
+          `UPDATE users SET name = ?, email = ?, password = ?, is_admin = ? WHERE id = ?`
+        )
+        .bind(userToUpdate.name, userToUpdate.email, userToUpdate.password, userToUpdate.is_admin, userToUpdate.id)
+        .run();
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(`Error: ${e.message}`, { status: 500 });
+    }
+  })
 );
+
+
 
 router.add("DELETE", "/user", (request, env) =>
 	withAuth(request, env, async (request, env) => {
