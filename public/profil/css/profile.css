@@ -9,7 +9,11 @@ body {
 	font-family: "Poppins", sans-serif;
 	color: #333;
 	font-weight: bold;
-	background: linear-gradient(90deg, #FDFFC2, #A3D8FF); /* žuto-plava gradijent */
+	background: linear-gradient(
+		90deg,
+		#fdffc2,
+		#a3d8ff
+	); /* žuto-plava gradijent */
 }
 
 /* Header */
@@ -37,7 +41,7 @@ header {
 
 .profile-icon {
 	font-size: 24px;
-	color: #A3D8FF; /* plava */
+	color: #a3d8ff; /* plava */
 }
 
 /* Profile Section */
@@ -55,7 +59,7 @@ header {
 
 .avatar {
 	font-size: 70px;
-	color: #A3D8FF; /* plava */
+	color: #a3d8ff; /* plava */
 }
 
 .info {
@@ -80,7 +84,7 @@ header {
 .fill {
 	width: 40%;
 	height: 100%;
-	background-color: #94FFD8; /* mint */
+	background-color: #94ffd8; /* mint */
 }
 
 .join-date {
@@ -98,7 +102,7 @@ header {
 }
 
 .card {
-	background-color: #A3D8FF; /* plava */
+	background-color: #a3d8ff; /* plava */
 	color: #fff;
 	padding: 25px;
 	width: 260px;
@@ -140,7 +144,7 @@ footer {
 }
 
 .logout:hover {
-	color: #94FFD8; /* mint */
+	color: #94ffd8; /* mint */
 }
 
 .menu-container {
@@ -171,14 +175,16 @@ footer {
 .dropdown-menu a {
 	padding: 12px 16px;
 	text-decoration: none;
-	color: #A3D8FF; /* plava */
+	color: #a3d8ff; /* plava */
 	font-weight: 500;
 	display: block;
-	transition: background-color 0.3s, color 0.3s;
+	transition:
+		background-color 0.3s,
+		color 0.3s;
 }
 
 .dropdown-menu a:hover {
-	background-color: #FDFFC2; /* žuta */
+	background-color: #fdffc2; /* žuta */
 	color: rgba(255, 118, 207, 0.597); /* nova roza */
 }
 

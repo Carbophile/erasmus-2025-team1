@@ -1,7 +1,7 @@
 body {
 	margin: 0;
 	min-height: 100vh;
-	background: linear-gradient(90deg, #FDFFC2, #A3D8FF);
+	background: linear-gradient(90deg, #fdffc2, #a3d8ff);
 	font-family: "Poppins", sans-serif;
 	opacity: 1;
 	transition: opacity 0.5s ease;
@@ -15,7 +15,7 @@ body {
 	width: 90%;
 	max-width: 500px;
 	height: 70px;
-	background: #FF76CE;
+	background: #ff76ce;
 	margin-top: 30px;
 	border-radius: 40px;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
@@ -43,17 +43,15 @@ body {
 	margin-left: 20px;
 	margin-right: 10px;
 }
-.nav-right{
+.nav-right {
 	margin-right: 30px;
 	margin-left: 10px;
 }
 
-
-
 .close-btn {
 	cursor: pointer;
 	font-size: 24px;
-	color: #94FFD8;
+	color: #94ffd8;
 }
 
 .main-content {
@@ -93,7 +91,7 @@ body {
 	height: 200px;
 	font-size: 2rem;
 	position: relative;
-	color: #FF76CE;
+	color: #ff76ce;
 	font-weight: 600;
 	transition:
 		box-shadow 0.25s cubic-bezier(0.4, 2, 0.3, 1),
@@ -104,7 +102,7 @@ body {
 .quiz-card:not(.locked):hover {
 	transform: translateY(-8px) scale(1.04);
 	box-shadow: 0 8px 32px rgba(163, 216, 255, 0.5);
-	background: #94FFD8;
+	background: #94ffd8;
 	cursor: pointer;
 	color: #fff;
 }
@@ -155,7 +153,7 @@ body {
 .leaderboard-title {
 	font-size: 1.3rem;
 	font-weight: 600;
-	color: #94FFD8;
+	color: #94ffd8;
 	margin-bottom: 18px;
 	text-align: center;
 }
@@ -180,7 +178,7 @@ body {
 }
 
 .leaderboard-item {
-	background: #FDFFC2;
+	background: #fdffc2;
 	border-radius: 8px;
 	padding: 10px 14px;
 	font-size: 1rem;
@@ -195,21 +193,21 @@ body {
 }
 
 .leaderboard-item.active {
-	background: #FF76CE;
+	background: #ff76ce;
 	color: #fff;
 	box-shadow: 0 4px 16px rgba(255, 118, 206, 0.4);
 	transform: scale(1.03);
 }
 
 .leaderboard-item:hover {
-	background: #A3D8FF;
+	background: #a3d8ff;
 	color: #fff;
 	box-shadow: 0 4px 16px rgba(163, 216, 255, 0.3);
 	transform: translateY(-3px) scale(1.04);
 }
 
 .show-more {
-	background: #94FFD8;
+	background: #94ffd8;
 	color: #444;
 	text-align: center;
 	border-radius: 8px;
@@ -223,10 +221,9 @@ body {
 }
 
 .show-more:hover {
-	background: #FF76CE;
+	background: #ff76ce;
 	color: #fff;
 }
-
 
 /* Responsiveness */
 @media (max-width: 1100px) {
