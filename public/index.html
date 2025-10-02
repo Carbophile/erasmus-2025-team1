@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizBattle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="index.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="circles" id="circlesContainer"></div>
+        <div class="title">
+            <h1>QuizBattle</h1>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h1>Welcome to QuizBattle</h1>
+            <p>The place where your knowledge is put to the test! We've prepared a variety of question categories to
+                challenge your mind and speed. Join in, show what you really know, earn points, and have fun with your
+                friends. Are you ready for the challenge?</p>
+            <button onclick="window.location.href='../login/index.html'">Let's get started!</button>
+        </div>
+    </div>
+
+    <script>
+        // 5 krugova sa slikama, jasno rastrkani
+        const circlesData = [
+            { img: 'slika1.webp', size: 200, top: 5, left: 5 },
+            { img: 'slika2.webp', size: 180, top: 35, left: 25 },
+            { img: 'slika3.webp', size: 170, top: 60, left: 10 },
+            { img: 'slika4.jpeg', size: 190, top: 20, left: 50 },
+            { img: 'slika5.jpeg', size: 160, top: 50, left: 55 }
+        ];
+
+        const container = document.getElementById('circlesContainer');
+
+        circlesData.forEach(circle => {
+            const div = document.createElement('div');
+            div.classList.add('circle');
+            div.style.width = circle.size + 'px';
+            div.style.height = circle.size + 'px';
+            div.style.top = circle.top + '%';
+            div.style.left = circle.left + '%';
+            div.style.background = `#${Math.floor(Math.random() * 16777215).toString(16)} url('${circle.img}') center/cover no-repeat`;
+            container.appendChild(div);
+        });
+    </script>
+
+</body>
+
+</html>
