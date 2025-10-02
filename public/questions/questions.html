@@ -83,7 +83,7 @@
             box-sizing: border-box;
         }
 
-       
+
         .card-content {
             display: flex;
             flex-direction: row;
@@ -292,205 +292,210 @@
 </head>
 
 <body>
-    <div class="card" id="app">
-        <h1>Quiz Beginner</h1>
+    <div class="timer">Time: <span id="timer-value">30</span></div>
+    <div class="points">Bodovi: <span id="points-value">0</span></div>
+
+    <div class="card">
+        <h1>Kviz</h1>
         <div class="card-content">
             <div class="image-container">
-                <img id="question-image" src="" alt="Slika pitanja" />
+                <img id="question-image" src="" alt="Slika Pitanja" style="display: none;" />
             </div>
-            <div class="quiz-content" id="quiz-root">
+            <div class="quiz-content">
+                <div class="question-block">
+                    <p id="question-text" class="question"></p>
+                </div>
+                <div id="answers-container" class="answers"></div>
             </div>
+        </div>
+        <div class="controls">
+            <button id="next-button" style="display: none;">Dalje</button>
         </div>
     </div>
 
     <script>
-        class Quiz {
-            constructor(container, questions = [], opts = {}) {
-                this.container = container;
-                this.questions = questions;
-                this.index = 0;
-                this.score = 0;
-                this.userAnswers = new Array(questions.length).fill(null);
-                this.showCorrectOnSubmit = opts.showCorrectOnSubmit ?? true;
-                this.render();
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../login/index.html';
+                return;
             }
 
-            render() {
-                this.container.innerHTML = `
-          <div class="meta-block">
-            <div class="progress" id="progress"></div>
-            <div class="timer" id="timer">00:30</div>
-            <div class="points" id="points">Score: 0</div>
-            <div class="question-block">
-              <div class="question" id="question"></div>
-            </div>
-          </div>
-          <div class="answers" id="answers"></div>
-          <div class="controls">
-            <div>
-              <button id="prevBtn" class="secondary">Previous</button>
-              <button id="nextBtn">Next</button>
-            </div>
-            <div class="progress" id="scoreDisplay"></div>
-          </div>
-          <div id="resultArea"></div>
-        `;
+            const urlParams = new URLSearchParams(window.location.search);
+            const quizId = urlParams.get('quiz_id');
+            let state, question, timerInterval, answerSubmitted = false;
 
-                this.$question = this.container.querySelector('#question');
-                this.$answers = this.container.querySelector('#answers');
-                this.$progress = this.container.querySelector('#progress');
-                this.$scoreDisplay = this.container.querySelector('#scoreDisplay');
-                this.$prevBtn = this.container.querySelector('#prevBtn');
-                this.$nextBtn = this.container.querySelector('#nextBtn');
-                this.$resultArea = this.container.querySelector('#resultArea');
-                this.timerDuration = 30;
-                this.timer = null;
-                this.timerElement = this.container.querySelector('#timer');
-                this.$points = this.container.querySelector('#points');
+            const questionText = document.getElementById('question-text');
+            const answersContainer = document.getElementById('answers-container');
+            const nextButton = document.getElementById('next-button');
+            const pointsValue = document.getElementById('points-value');
+            const timerValue = document.getElementById('timer-value');
+            const questionImage = document.getElementById('question-image');
 
-                this.$prevBtn.addEventListener('click', () => this.prev());
-                this.$nextBtn.addEventListener('click', () => this.next());
-
-                window.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowRight') this.next();
-                    if (e.key === 'ArrowLeft') this.prev();
-                });
-
-                this.showQuestion();
+            async function startQuiz() {
+                try {
+                    const response = await fetch('/quiz/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ quiz_id: quizId })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        state = data.state;
+                        question = data.question;
+                        await loadQuestionOptions();
+                        updateUI();
+                    } else {
+                        alert(data.error || 'Failed to start quiz');
+                        window.location.href = '../leadeboard/home.html';
+                    }
+                } catch (error) {
+                    console.error('Error starting quiz:', error);
+                    alert('Failed to start quiz');
+                    window.location.href = '../leadeboard/home.html';
+                }
             }
 
-            startTimer() {
-                clearInterval(this.timer);
-                let timeLeft = this.timerDuration;
-                this.updateTimerDisplay(timeLeft);
+            async function loadQuestionOptions() {
+                try {
+                    const response = await fetch(`/option?question_id=${question.id}`);
+                    const options = await response.json();
+                    question.options = options;
+                } catch (error) {
+                    console.error('Error loading options:', error);
+                    question.options = [];
+                }
+            }
 
-                this.timer = setInterval(() => {
+            function updateUI() {
+                questionText.textContent = question.text || 'Loading question...';
+
+                // Parse state to get current score
+                try {
+                    const stateData = JSON.parse(atob(state.split('.')[1]));
+                    pointsValue.textContent = stateData.score || 0;
+                } catch (e) {
+                    pointsValue.textContent = '0';
+                }
+
+                answersContainer.innerHTML = '';
+                answerSubmitted = false;
+
+                if (question.options && question.options.length > 0) {
+                    question.options.forEach(option => {
+                        const answerDiv = document.createElement('div');
+                        answerDiv.className = 'answer';
+                        answerDiv.textContent = option.option;
+                        answerDiv.dataset.optionId = option.id;
+                        answersContainer.appendChild(answerDiv);
+                    });
+                }
+
+                if (question.image_url) {
+                    questionImage.src = question.image_url;
+                    questionImage.style.display = 'block';
+                } else {
+                    questionImage.style.display = 'none';
+                }
+
+                startTimer();
+                nextButton.style.display = 'none';
+            }
+
+            function startTimer() {
+                let timeLeft = 30;
+                timerValue.textContent = timeLeft;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
                     timeLeft--;
-                    this.updateTimerDisplay(timeLeft);
-
+                    timerValue.textContent = timeLeft;
                     if (timeLeft <= 0) {
-                        clearInterval(this.timer);
-                        this.next();
+                        clearInterval(timerInterval);
+                        if (!answerSubmitted) {
+                            handleAnswer(null); // Time's up
+                        }
                     }
                 }, 1000);
             }
 
-            updateTimerDisplay(seconds) {
-                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-                const secs = String(seconds % 60).padStart(2, '0');
-                this.timerElement.textContent = `${mins}:${secs}`;
+            function selectAnswer(selectedDiv) {
+                if (answerSubmitted) return;
+                document.querySelectorAll('.answer').forEach(div => div.classList.remove('selected'));
+                selectedDiv.classList.add('selected');
             }
 
-            showQuestion() {
-                const q = this.questions[this.index];
-                this.$question.textContent = `${this.index + 1}. ${q.text}`;
-                this.$answers.innerHTML = '';
-                q.choices.forEach((c, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'answer';
-                    div.tabIndex = 0;
-                    div.textContent = c;
-                    div.addEventListener('click', () => this.select(i));
-                    div.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.select(i) });
+            async function handleAnswer(selectedOptionId) {
+                if (answerSubmitted) return;
+                answerSubmitted = true;
+                clearInterval(timerInterval);
 
-                    if (this.userAnswers[this.index] === i) div.classList.add('selected');
+                try {
+                    const response = await fetch('/quiz/answer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ state: state, answer: selectedOptionId })
+                    });
+                    const data = await response.json();
 
-                    this.$answers.appendChild(div);
-                });
+                    if (data.success) {
+                        if (data.game_over) {
+                            alert(`Game over! Your final score is ${data.final_score}`);
 
-                const imgEl = document.getElementById('question-image');
-                if (q.image) {
-                    imgEl.src = q.image;
-                    imgEl.style.display = 'block';
-                } else {
-                    imgEl.src = '';
-                    imgEl.style.display = 'none';
-                }
+                            // Save result to backend
+                            await fetch('/quiz/result', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    quiz_id: quizId,
+                                    score: data.final_score,
+                                    time_taken: 0
+                                })
+                            });
 
-                this.updateMeta();
-                this.updateButtons();
-                this.$resultArea.innerHTML = '';
-                this.startTimer();
-            }
-
-            select(choiceIndex) {
-                this.userAnswers[this.index] = choiceIndex;
-                Array.from(this.$answers.children).forEach((el, i) => {
-                    el.classList.toggle('selected', i === choiceIndex);
-                });
-
-                this.calculateScore();
-            }
-
-            calculateScore() {
-                let correct = 0;
-                this.questions.forEach((q, i) => {
-                    if (this.userAnswers[i] === q.answerIndex) correct++;
-                });
-                this.score = correct;
-                this.$points.textContent = `Score: ${this.score}`;
-            }
-
-            next() {
-                if (this.index < this.questions.length - 1) {
-                    this.index++;
-                    this.showQuestion();
-                } else {
-                    this.finish();
+                            window.location.href = '../leadeboard/home.html';
+                            return;
+                        }
+                        state = data.state;
+                        question = data.question;
+                        await loadQuestionOptions();
+                        highlightAnswers(selectedOptionId);
+                        nextButton.style.display = 'block';
+                    } else {
+                        alert(data.error || 'Error submitting answer');
+                    }
+                } catch (error) {
+                    console.error('Error submitting answer:', error);
+                    alert('Network error. Please try again.');
                 }
             }
 
-            prev() {
-                if (this.index > 0) {
-                    this.index--;
-                    this.showQuestion();
+            function highlightAnswers(selectedOptionId) {
+                document.querySelectorAll('.answer').forEach(div => {
+                    // Find correct answer
+                    const option = question.options.find(opt => opt.id == div.dataset.optionId);
+                    if (option && option.correct) {
+                        div.classList.add('correct');
+                    } else if (div.dataset.optionId == selectedOptionId) {
+                        div.classList.add('wrong');
+                    }
+                    div.style.pointerEvents = 'none';
+                });
+            }
+
+            nextButton.addEventListener('click', updateUI);
+
+            answersContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('answer') && !answerSubmitted) {
+                    selectAnswer(e.target);
+                    handleAnswer(e.target.dataset.optionId);
                 }
-            }
+            });
 
-            updateMeta() {
-                this.$progress.textContent = `Question ${this.index + 1} of ${this.questions.length}`;
-                this.$scoreDisplay.textContent = `Answered: ${this.userAnswers.filter(a => a !== null).length}/${this.questions.length}`;
-                this.$points.textContent = `Score: ${this.score}`;
-            }
-
-            updateButtons() {
-                this.$prevBtn.disabled = this.index === 0;
-                this.$nextBtn.textContent = (this.index === this.questions.length - 1) ? 'Finish' : 'Next';
-            }
-
-            finish() {
-                this.calculateScore();
-                this.$resultArea.innerHTML = `<div class="result">Score: ${this.score} / ${this.questions.length}</div>`;
-                this.timerElement.textContent = '00:00';
-            }
-        }
-
-        const sampleQuestions = [
-            {
-                id: 1,
-                text: 'In which country is Zwolle located?',
-                choices: ['Germany', 'Belgium', 'Netherlands', 'France'],
-                answerIndex: 2,
-                image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Map_Netherlands_Zwolle.png/320px-Map_Netherlands_Zwolle.png'
-            },
-            {
-                id: 2,
-                text: 'In which country is Split located?',
-                choices: ['Italy', 'Croatia', 'Slovenia', 'Greece'],
-                answerIndex: 1,
-                image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Split_%28Orthophoto%29.png/320px-Split_%28Orthophoto%29.png'
-            },
-            {
-                id: 3,
-                text: 'Which sport is most popular in Zwolle?',
-                choices: ['Football', 'Basketball', 'Ice hockey', 'Rugby'],
-                answerIndex: 0,
-                image: ''
-            }
-        ];
-
-        const root = document.getElementById('quiz-root');
-        new Quiz(root, sampleQuestions, { showCorrectOnSubmit: true });
+            startQuiz();
+        });
     </script>
 </body>
 
