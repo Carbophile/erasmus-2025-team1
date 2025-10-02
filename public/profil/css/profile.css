@@ -9,7 +9,11 @@ body {
 	font-family: "Poppins", sans-serif;
 	color: #333;
 	font-weight: bold;
-	background: linear-gradient(90deg, #e2e2e2, #c9d6ff);
+	background: linear-gradient(
+		90deg,
+		#fdffc2,
+		#a3d8ff
+	); /* žuto-plava gradijent */
 }
 
 /* Header */
@@ -24,7 +28,7 @@ header {
 
 .menu-icon {
 	font-size: 24px;
-	color: #e62727;
+	color: rgba(255, 118, 207, 0.597); /* nova roza */
 	cursor: pointer;
 }
 
@@ -32,10 +36,12 @@ header {
 	display: flex;
 	align-items: center;
 	gap: 10px;
+	color: rgba(255, 118, 207, 0.597);
 }
 
 .profile-icon {
 	font-size: 24px;
+	color: #a3d8ff; /* plava */
 }
 
 /* Profile Section */
@@ -53,6 +59,7 @@ header {
 
 .avatar {
 	font-size: 70px;
+	color: #a3d8ff; /* plava */
 }
 
 .info {
@@ -62,7 +69,7 @@ header {
 .points {
 	font-size: 18px;
 	margin-bottom: 10px;
-	color: #e62727;
+	color: rgba(255, 118, 207, 0.597); /* nova roza */
 }
 
 .progress-bar {
@@ -77,7 +84,7 @@ header {
 .fill {
 	width: 40%;
 	height: 100%;
-	background-color: #1c6ba0;
+	background-color: #94ffd8; /* mint */
 }
 
 .join-date {
@@ -95,8 +102,8 @@ header {
 }
 
 .card {
-	background-color: #1c6ba0;
-	color: #f3f2ec;
+	background-color: #a3d8ff; /* plava */
+	color: #fff;
 	padding: 25px;
 	width: 260px;
 	border-radius: 15px;
@@ -112,9 +119,9 @@ header {
 }
 
 .card:hover {
-	background-color: #e62727;
+	background-color: rgba(255, 118, 207, 0.597); /* nova roza */
 	cursor: pointer;
-	color: #f3f2ec;
+	color: #fff;
 }
 
 .stats p {
@@ -129,7 +136,7 @@ footer {
 }
 
 .logout {
-	color: #e62727;
+	color: rgba(255, 118, 207, 0.597); /* nova roza */
 	font-weight: bold;
 	text-decoration: none;
 	font-size: 16px;
@@ -137,7 +144,7 @@ footer {
 }
 
 .logout:hover {
-	color: #1c6ba0;
+	color: #94ffd8; /* mint */
 }
 
 .menu-container {
@@ -146,7 +153,7 @@ footer {
 
 .menu-icon {
 	font-size: 24px;
-	color: #e62727;
+	color: rgba(255, 118, 207, 0.597); /* nova roza */
 	cursor: pointer;
 	padding: 5px;
 }
@@ -168,7 +175,7 @@ footer {
 .dropdown-menu a {
 	padding: 12px 16px;
 	text-decoration: none;
-	color: #1c6ba0;
+	color: #a3d8ff; /* plava */
 	font-weight: 500;
 	display: block;
 	transition:
@@ -177,8 +184,8 @@ footer {
 }
 
 .dropdown-menu a:hover {
-	background-color: #ffe5e5;
-	color: #e62727;
+	background-color: #fdffc2; /* žuta */
+	color: rgba(255, 118, 207, 0.597); /* nova roza */
 }
 
 .menu-container:hover .dropdown-menu {

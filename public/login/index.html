@@ -4,49 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login/Signup Form</title>
+    <title>Login/Signup - QuizBattle</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="../login/css/login.css" rel="stylesheet">
-
 </head>
 
 <body>
-
     <div class="container">
         <div class="form-box login">
-            <form id="login-form">
+            <form id="login-form" action="javascript:void(0)">
                 <h1>Login</h1>
                 <div class="input-box">
-                    <input type="email" placeholder="Email" required>
+                    <input id="login-email" type="email" placeholder="Email" required>
                     <i class='bx bxs-user'></i>
                 </div>
                 <div class="input-box">
-                    <input type="password" placeholder="Password" required>
+                    <input id="login-password" type="password" placeholder="Password" required>
                     <i class='bx bxs-lock-alt'></i>
                 </div>
                 <div class="forgot-link">
                     <a href="#">Forgot Password?</a>
                 </div>
                 <button type="submit" class="btn">Login</button>
+                <div id="login-msg" style="margin-top:10px; font-size:0.9rem;"></div>
             </form>
         </div>
 
         <div class="form-box register">
-            <form id="register-form">
+            <form id="register-form" action="javascript:void(0)">
                 <h1>Registration</h1>
                 <div class="input-box">
-                    <input type="text" placeholder="Name" required>
+                    <input id="reg-name" type="text" placeholder="Name" required>
                     <i class='bx bxs-user'></i>
                 </div>
                 <div class="input-box">
-                    <input type="email" placeholder="Email" required>
-                    <i class='bx bxs-envelope'></i>
+                    <input id="reg-email" type="email" placeholder="Email" required>
+                    <i class='bx bxs-user'></i>
                 </div>
                 <div class="input-box">
-                    <input type="password" placeholder="Password" required>
+                    <input id="reg-password" type="password" placeholder="Password" required>
                     <i class='bx bxs-lock-alt'></i>
                 </div>
                 <button type="submit" class="btn">Register</button>
+                <div id="reg-msg" style="margin-top:10px; font-size:0.9rem;"></div>
             </form>
         </div>
 
@@ -54,13 +54,12 @@
             <div class="toggle-panel toggle-left">
                 <h1>Hello, Welcome!</h1>
                 <p>Don't have an account?</p>
-                <button class="btn register-btn">Register</button>
+                <button class="btn register-btn" type="button">Register</button>
             </div>
-
             <div class="toggle-panel toggle-right">
                 <h1>Welcome Back!</h1>
                 <p>Already have an account?</p>
-                <button class="btn login-btn">Login</button>
+                <button class="btn login-btn" type="button">Login</button>
             </div>
         </div>
     </div>
@@ -69,60 +68,47 @@
         const container = document.querySelector('.container');
         const registerBtn = document.querySelector('.register-btn');
         const loginBtn = document.querySelector('.login-btn');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
+        registerBtn.addEventListener('click', () => container.classList.add('active'));
+        loginBtn.addEventListener('click', () => container.classList.remove('active'));
 
-        registerBtn.addEventListener('click', () => {
-            container.classList.add('active');
+        function saveAuth(data) {
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('userId', data.user.id);
+            localStorage.setItem('userName', data.user.name || '');
+            localStorage.setItem('userEmail', data.user.email || '');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const msg = document.getElementById('login-msg');
+            msg.textContent = 'Logging in...';
+            try {
+                const res = await fetch('/user/login', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ email, password }) });
+                const data = await res.json();
+                if (data.success) { saveAuth(data); msg.style.color='lime'; msg.textContent='Success! Redirecting...'; setTimeout(()=> window.location.href='../leadeboard/home.html', 600); }
+                else { msg.style.color='red'; msg.textContent='Invalid credentials.'; }
+            } catch(e){ msg.style.color='red'; msg.textContent='Server error.'; }
         });
 
-        loginBtn.addEventListener('click', () => {
-            container.classList.remove('active');
+        document.getElementById('register-form').addEventListener('submit', async () => {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const msg = document.getElementById('reg-msg');
+            msg.textContent = 'Registering...';
+            try {
+                const res = await fetch('/user/new', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, email, password }) });
+                const data = await res.json();
+                if (data.success) { msg.style.color='lime'; msg.textContent='Account created! You can login now.'; setTimeout(()=> container.classList.remove('active'), 800); }
+                else { msg.style.color='red'; msg.textContent='Registration failed.'; }
+            } catch(e){ msg.style.color='red'; msg.textContent='Server error.'; }
         });
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = loginForm.querySelector('input[type="email"]').value;
-            const password = loginForm.querySelector('input[type="password"]').value;
-
-            const response = await fetch('/user/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = '/leadeboard/home.html'; // Redirect to a protected page
-            } else {
-                alert(data.error || 'Login failed');
-            }
-        });
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = registerForm.querySelector('input[type="text"]').value;
-            const email = registerForm.querySelector('input[type="email"]').value;
-            const password = registerForm.querySelector('input[type="password"]').value;
-
-            const response = await fetch('/user/new', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                alert('Registration successful! Please login.');
-                container.classList.remove('active');
-            } else {
-                alert(data.error || 'Registration failed');
-            }
-        });
+        // If already logged in redirect to home
+        if (localStorage.getItem('authToken')) {
+            setTimeout(()=> window.location.href='../leadeboard/home.html', 50);
+        }
     </script>
 </body>
 
