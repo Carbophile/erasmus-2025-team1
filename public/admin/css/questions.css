@@ -148,6 +148,9 @@
 	font-size: 0.9em;
 	margin-top: 4px;
 }
+.btn i {
+  margin-left: 4px;
+}
 
 .submit-btn:hover {
 	background: #15803d;

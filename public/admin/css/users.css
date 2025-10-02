@@ -141,6 +141,10 @@ a.btn:hover {
 	border-radius: 20px;
 }
 
+.btn i {
+	margin-left: 4px;
+}
+
 .search-box input {
 	border: none;
 	background: transparent;
