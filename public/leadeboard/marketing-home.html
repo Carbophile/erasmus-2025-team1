@@ -6,154 +6,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuizBattle</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f4f4f4;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .circles {
-            position: relative;
-            flex: 1;
-            min-width: 300px;
-            height: 100vh;
-        }
-
-        .circle {
-            position: absolute;
-            border-radius: 50%;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .title {
-            flex: 1;
-            min-width: 300px;
-            background: #1C6BA0;
-            color: white;
-            border-top-left-radius: 230px;
-            border-bottom-left-radius: 230px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .title h1 {
-            font-size: clamp(2rem, 5vw, 4rem);
-            font-weight: 700;
-            margin: 0;
-            text-align: center;
-        }
-
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .hero-content {
-            max-width: 600px;
-        }
-
-        .hero-content h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .hero-content p {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        .hero-content button {
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            color: white;
-            background-color: #E62727;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .hero-content button:hover {
-            background-color: #c21f1f;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                height: auto;
-            }
-
-            .circles {
-                position: static;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 15px;
-                padding: 20px;
-                height: auto;
-            }
-
-            .circle {
-                position: static;
-                width: 120px;
-                height: 120px;
-            }
-
-            .title {
-                border-radius: 0;
-                width: 100%;
-                height: auto;
-                padding: 30px 20px;
-            }
-
-            .title h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-content p {
-                font-size: 1rem;
-            }
-        }
-    </style>
+    <link href="../leadeboard/css/marketing-home.css" rel="stylesheet">
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="container" data-scroll>
         <div class="circles" id="circlesContainer"></div>
         <div class="title">
             <h1>QuizBattle</h1>
         </div>
     </div>
 
-    <div class="hero">
+    <div class="quiz-features" data-scroll>
+        <div class="feature green">
+            <h3>🎉 Fun with Friends</h3>
+            <p>Invite your friends and compete in speed and knowledge — perfect for gatherings.</p>
+        </div>
+
+        <div class="feature yellow">
+            <h3>❤️ 3 Lives</h3>
+            <p>Each player has 3 lives — lose them all and you’ll have to start again.</p>
+        </div>
+
+        <div class="feature orange">
+            <h3>⏱️ 30-Second Timer</h3>
+            <p>Every question has a 30-second time limit — speed is the key to success.</p>
+        </div>
+
+        <div class="feature pink">
+            <h3>🎯 Multiple Difficulty Levels</h3>
+            <p>Choose between easy, medium, and hard — suitable for all types of players.</p>
+        </div>
+    </div>
+
+    <div class="hero" data-scroll>
         <div class="hero-content">
             <h1>Welcome to QuizBattle</h1>
             <p>The place where your knowledge is put to the test! We've prepared a variety of question categories to
@@ -164,13 +51,13 @@
     </div>
 
     <script>
-        // 5 krugova sa slikama, jasno rastrkani
+        // 5 circles with images from img folder
         const circlesData = [
-            { img: 'slika1.webp', size: 200, top: 5, left: 5 },
-            { img: 'slika2.webp', size: 180, top: 35, left: 25 },
-            { img: 'slika3.webp', size: 170, top: 60, left: 10 },
-            { img: 'slika4.jpeg', size: 190, top: 20, left: 50 },
-            { img: 'slika5.jpeg', size: 160, top: 50, left: 55 }
+            { img: 'img/slika1.webp', size: 200, top: 5, left: 5 },
+            { img: 'img/slika2.webp', size: 180, top: 35, left: 25 },
+            { img: 'img/slika3.webp', size: 170, top: 60, left: 10 },
+            { img: 'img/slika4.jpeg', size: 190, top: 20, left: 50 },
+            { img: 'img/slika5.jpeg', size: 160, top: 50, left: 55 }
         ];
 
         const container = document.getElementById('circlesContainer');
@@ -182,9 +69,48 @@
             div.style.height = circle.size + 'px';
             div.style.top = circle.top + '%';
             div.style.left = circle.left + '%';
-            div.style.background = `#${Math.floor(Math.random() * 16777215).toString(16)} url('${circle.img}') center/cover no-repeat`;
+            div.style.backgroundImage = `url('${circle.img}')`;
+            div.style.backgroundSize = 'cover';
+            div.style.backgroundPosition = 'center';
+            div.style.backgroundRepeat = 'no-repeat';
             container.appendChild(div);
         });
+
+        // Scroll animation
+        const scrollElements = document.querySelectorAll("[data-scroll]");
+
+        const elementInView = (el, dividend = 1) => {
+            const elementTop = el.getBoundingClientRect().top;
+            return (
+                elementTop <=
+                (window.innerHeight || document.documentElement.clientHeight) / dividend
+            );
+        };
+
+        const displayScrollElement = (element) => {
+            element.classList.add("visible");
+        };
+
+        const hideScrollElement = (element) => {
+            element.classList.remove("visible");
+        };
+
+        const handleScrollAnimation = () => {
+            scrollElements.forEach((el) => {
+                if (elementInView(el, 1.25)) {
+                    displayScrollElement(el);
+                } else {
+                    hideScrollElement(el);
+                }
+            })
+        }
+
+        window.addEventListener("scroll", () => {
+            handleScrollAnimation();
+        });
+
+        // Trigger on load
+        handleScrollAnimation();
     </script>
 
 </body>

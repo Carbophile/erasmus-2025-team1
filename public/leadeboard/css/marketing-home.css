@@ -1,13 +1,31 @@
 body {
-	font-family: "Poppins", sans-serif;
 	margin: 0;
-	padding: 0;
-	background: #f4f4f4;
-	display: flex;
-	flex-direction: column;
 	min-height: 100vh;
+	background: linear-gradient(90deg, #fdffc2, #a3d8ff);
+	font-family: "Poppins", sans-serif;
+	opacity: 1;
+	transition: opacity 0.5s ease;
+	color: white;
+	/* svi tekstovi bijeli */
 }
 
+/* Postojeći CSS ostaje isti */
+
+/* Scroll animation */
+[data-scroll] {
+	transform: translateY(50px);
+	opacity: 0;
+	transition:
+		transform 0.8s ease-out,
+		opacity 0.8s ease-out;
+}
+
+[data-scroll].visible {
+	transform: translateY(0);
+	opacity: 1;
+}
+
+/* Layout */
 .container {
 	display: flex;
 	justify-content: space-between;
@@ -31,13 +49,15 @@ body {
 	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Title panel */
 .title {
 	flex: 1;
 	min-width: 300px;
-	background: #e62727;
+	background: rgba(255, 118, 207, 0.597);
+	/* pink */
 	color: white;
-	border-top-left-radius: 180px;
-	border-bottom-left-radius: 180px;
+	border-top-left-radius: 230px;
+	border-bottom-left-radius: 230px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -51,8 +71,50 @@ body {
 	text-align: center;
 }
 
+/* Features grid */
+.quiz-features {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20px;
+	padding: 40px;
+	margin-top: 80px;
+}
+
+.quiz-features .feature {
+	border-radius: 12px;
+	padding: 20px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	text-align: center;
+	font-weight: 500;
+	color: white;
+	/* tekst bijel */
+}
+
+/* Kućice s bojama i opacity */
+.feature.green {
+	background: rgba(148, 255, 216, 0.8);
+	/* mint */
+}
+
+.feature.yellow {
+	background: rgba(253, 255, 194, 0.8);
+	/* svijetlo žuta */
+	color: #333;
+	/* bolja čitljivost */
+}
+
+.feature.orange {
+	background: rgba(163, 216, 255, 0.8);
+	/* svijetlo plava */
+}
+
+.feature.pink {
+	background: rgba(255, 118, 206, 0.597);
+	/* pink */
+}
+
+/* Hero section */
 .hero {
-	min-height: 100vh;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -68,12 +130,14 @@ body {
 	font-size: 3rem;
 	font-weight: 700;
 	margin-bottom: 20px;
+	color: white;
 }
 
 .hero-content p {
 	font-size: 1.2rem;
 	margin-bottom: 30px;
 	line-height: 1.5;
+	color: white;
 }
 
 .hero-content button {
@@ -81,16 +145,20 @@ body {
 	font-size: 1rem;
 	font-weight: 600;
 	color: white;
-	background-color: #e62727;
+	background-color: rgba(255, 118, 206, 0.597);
+	/* pink */
 	border: none;
 	border-radius: 8px;
 	cursor: pointer;
+	transition: 0.3s;
 }
 
 .hero-content button:hover {
-	background-color: #c21f1f;
+	background-color: rgba(163, 216, 255, 0.9);
+	/* svijetlo plava */
 }
 
+/* Responsive */
 @media (max-width: 768px) {
 	.container {
 		flex-direction: column;
@@ -122,6 +190,10 @@ body {
 
 	.title h1 {
 		font-size: 2.5rem;
+	}
+
+	.quiz-features {
+		grid-template-columns: 1fr;
 	}
 
 	.hero-content h1 {
