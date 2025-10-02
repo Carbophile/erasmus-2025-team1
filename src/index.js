@@ -725,23 +725,36 @@ router.add("PUT", "/question", (request, env) =>
 );
 
 router.add("DELETE", "/question", (request, env) =>
-	withAuth(request, env, async (request, env) => {
-		try {
-			const db = getDB(env);
-			if (!(await verifyAdmin(db, request.user))) {
-				return new Response("Unauthorized", { status: 401 });
-			}
-			const { id } = await request.json();
-			const question = new Question({ id });
-			await question.delete(db);
-			return new Response(JSON.stringify({ success: true }), {
-				headers: { "Content-Type": "application/json" },
-			});
-		} catch (e) {
-			return new Response(`Error: ${e.message}`, { status: 500 });
-		}
-	}),
+  withAuth(request, env, async (request, env) => {
+    try {
+      const db = getDB(env);
+      
+      if (!(await verifyAdmin(db, request.user))) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+
+      const { id } = await request.json();
+      if (!id) return new Response("Missing question id", { status: 400 });
+
+      const question = new Question({ id });
+      await question.delete(db);
+
+      const option = new Option();
+      const options = await option.loadFromQuestion(db, id); 
+      for (const opt of options) {
+        const o = new Option({ id: opt.id });
+        await o.delete(db);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return new Response(`Error: ${e.message}`, { status: 500 });
+    }
+  }),
 );
+
 
 // CATEGORY
 router.add("GET", "/category", async (request, env) => {
