@@ -1,3 +1,4 @@
+import { sign, verify } from "./crypto";
 import {
 	Category,
 	Option,
@@ -7,730 +8,938 @@ import {
 	Session,
 	User,
 } from "./db/classes";
-import { getDB, queryDB } from "./db/db";
+import { getDB } from "./db/db";
+import { Router } from "./router";
 
-function checkLoggedIn(request) {
-	const cookieHeader = request.headers.get("Cookie");
-	const cookies = Object.fromEntries(
-		cookieHeader?.split("; ").map((c) => {
-			const [key, value] = c.split("=");
-			return [key, value];
-		}) || [],
-	);
-	return !!cookies.session_token;
+const QUIZ_LIVES = 3;
+const QUESTION_TIME = 30; // in seconds
+
+async function verifyAdmin(_db, user) {
+	return user?.is_admin;
 }
 
-// This is nowhere near final, just a skeleton to build upon
+async function withAuth(request, env, handler) {
+	const authHeader = request.headers.get("Authorization");
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		return new Response("Unauthorized", { status: 401 });
+	}
+	const token = authHeader.substring(7);
+	const db = getDB(env);
+	const session = new Session();
+	const valid = await session.loadByToken(db, token);
+	if (!valid) {
+		return new Response("Unauthorized", { status: 401 });
+	}
+	request.user = session.user;
+	return handler(request, env);
+}
+
+const router = new Router();
+
+// USER
+router.add("GET", "/user", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id, email } = Object.fromEntries(new URL(request.url).searchParams);
+		const user = new User();
+		let found = false;
+		if (id) found = await user.load(db, id);
+		else if (email) found = await user.loadByEmail(db, email);
+		if (!found) return new Response("Not Found", { status: 404 });
+		// remove password from user object
+		delete user.password;
+		return new Response(JSON.stringify(user), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("PUT", "/user", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			const data = await request.json();
+			const userToUpdate = new User(data);
+
+			// a user can only update their own data, unless they are an admin
+			if (request.user.id !== userToUpdate.id && !request.user.is_admin) {
+				return new Response("Forbidden", { status: 403 });
+			}
+
+			if (!userToUpdate.id)
+				return new Response("Missing user id", { status: 400 });
+			await userToUpdate.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/user", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			const { id } = await request.json();
+
+			// a user can only delete their own account, unless they are an admin
+			if (request.user.id !== id && !request.user.is_admin) {
+				return new Response("Forbidden", { status: 403 });
+			}
+
+			const user = new User({ id });
+			await user.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("POST", "/user/login", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { email, password } = await request.json();
+		const user = new User();
+		const found = await user.loadByEmail(db, email);
+		if (!found || !user.verifyPassword(password))
+			return new Response(JSON.stringify({ success: false }), {
+				headers: { "Content-Type": "application/json" },
+				status: 401,
+			});
+
+		const session = new Session({ user });
+		await session.create(db);
+
+		delete user.password;
+		return new Response(
+			JSON.stringify({ success: true, user, token: session.token }),
+			{
+				headers: { "Content-Type": "application/json" },
+			},
+		);
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("POST", "/user/new", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const data = await request.json();
+		const user = new User(data);
+		const result = await user.create(db);
+		if (result.success) {
+			return new Response(JSON.stringify({ success: true, user_id: user.id }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} else {
+			return new Response(
+				JSON.stringify({ success: false, error: "User creation failed" }),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 500,
+				},
+			);
+		}
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("POST", "/user/isAdmin", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			const isAdmin = await verifyAdmin(db, request.user);
+			return new Response(JSON.stringify({ success: true, isAdmin }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+// LEADERBOARD
+router.add("GET", "/leaderboard", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const user = new User();
+		const leaderboard = await user.loadLeaderboard(
+			db,
+			new URL(request.url).searchParams.get("limit"),
+		);
+		return new Response(JSON.stringify({ success: true, leaderboard }), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+// Add missing collection endpoints
+router.add("GET", "/users", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const user = new User();
+			const users = await user.loadAll(db);
+			// Remove passwords from all users
+			users.forEach((user) => {
+				delete user.password;
+			});
+			return new Response(JSON.stringify({ success: true, users }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("GET", "/questions", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const question = new Question();
+			const questions = await question.loadAll(db);
+			return new Response(JSON.stringify({ success: true, questions }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("GET", "/categories", async (_request, env) => {
+	try {
+		const db = getDB(env);
+		const category = new Category();
+		const categories = await category.loadAll(db);
+		return new Response(JSON.stringify({ success: true, categories }), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+// QUIZ
+router.add("GET", "/quiz", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id } = Object.fromEntries(new URL(request.url).searchParams);
+		const quiz = new Quiz();
+		const found = await quiz.load(db, id);
+		if (!found) return new Response("Not Found", { status: 404 });
+		return new Response(JSON.stringify(quiz), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("PUT", "/quiz", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const quiz = new Quiz(data);
+			if (!quiz.id) return new Response("Missing quiz id", { status: 400 });
+			await quiz.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/quiz", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const { id } = await request.json();
+			const quiz = new Quiz({ id });
+			await quiz.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("POST", "/quiz/start", async (_request, env) => {
+	try {
+		const db = getDB(env);
+		const question = new Question();
+		const randomQuestion = await question.loadRandom(db);
+
+		if (!randomQuestion) {
+			return new Response(
+				JSON.stringify({ success: false, error: "No questions available" }),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 500,
+				},
+			);
+		}
+
+		// Load options for the question
+		const option = new Option();
+		const options = await option.loadFromQuestion(db, randomQuestion.id);
+
+		const state = {
+			lives: QUIZ_LIVES,
+			score: 0,
+			question_id: randomQuestion.id,
+			question_difficulty: randomQuestion.difficulty,
+			question_start_time: Date.now(),
+			history: [],
+		};
+
+		const signedState = await sign(state, env.QUIZ_SECRET);
+
+		return new Response(
+			JSON.stringify({
+				success: true,
+				question: { ...randomQuestion, options },
+				state: signedState,
+			}),
+			{
+				headers: { "Content-Type": "application/json" },
+			},
+		);
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("POST", "/quiz/answer", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { state: signedState, answer } = await request.json();
+
+		const state = await verify(signedState, env.QUIZ_SECRET);
+
+		if (!state) {
+			return new Response(
+				JSON.stringify({ success: false, error: "Invalid state" }),
+				{
+					headers: { "Content-Type": "application/json" },
+					status: 400,
+				},
+			);
+		}
+
+		const {
+			question_id,
+			question_start_time,
+			score,
+			history,
+			question_difficulty,
+		} = state;
+
+		if (Date.now() - question_start_time > QUESTION_TIME * 1000) {
+			state.lives -= 1;
+			if (state.lives <= 0) {
+				return new Response(
+					JSON.stringify({
+						success: true,
+						game_over: true,
+						final_score: score,
+					}),
+					{
+						headers: { "Content-Type": "application/json" },
+					},
+				);
+			}
+		} else {
+			// Load the correct option for this question
+			const option = new Option();
+			const options = await option.loadFromQuestion(db, question_id);
+			const correctOption = options.find((opt) => opt.correct);
+
+			if (correctOption && correctOption.id.toString() === answer.toString()) {
+				state.score += 1 * question_difficulty;
+			} else {
+				state.lives -= 1;
+			}
+		}
+
+		if (state.lives <= 0) {
+			return new Response(
+				JSON.stringify({
+					success: true,
+					game_over: true,
+					final_score: state.score,
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		}
+
+		const newQuestion = new Question();
+		const randomQuestion = await newQuestion.loadRandom(db, history);
+
+		if (!randomQuestion) {
+			return new Response(
+				JSON.stringify({
+					success: true,
+					game_over: true,
+					final_score: state.score,
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		}
+
+		// Load options for the new question
+		const option = new Option();
+		const newOptions = await option.loadFromQuestion(db, randomQuestion.id);
+
+		state.history.push(question_id);
+		state.question_id = randomQuestion.id;
+		state.question_difficulty = randomQuestion.difficulty;
+		state.question_start_time = Date.now();
+
+		const newSignedState = await sign(state, env.QUIZ_SECRET);
+
+		return new Response(
+			JSON.stringify({
+				success: true,
+				question: { ...randomQuestion, options: newOptions },
+				state: newSignedState,
+			}),
+			{
+				headers: { "Content-Type": "application/json" },
+			},
+		);
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("POST", "/quiz/new", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+
+			const data = await request.json();
+			const quizData = {
+				name: data.name,
+				score_needed: data.score_needed,
+				max_time: data.max_time,
+			};
+			const quiz = new Quiz(quizData);
+
+			const result = await quiz.create(db);
+			if (result.success) {
+				return new Response(
+					JSON.stringify({ success: true, quiz_id: quiz.id }),
+					{
+						headers: { "Content-Type": "application/json" },
+					},
+				);
+			} else {
+				return new Response(
+					JSON.stringify({ success: false, error: "Quiz creation failed" }),
+					{
+						headers: { "Content-Type": "application/json" },
+						status: 500,
+					},
+				);
+			}
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("POST", "/quiz/question", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+
+			const data = await request.json();
+			const questionData = {
+				quiz_id: data.quiz_id,
+				category_id: data.category_id,
+				text: data.text || "Placeholder",
+				country: typeof data.country === "string" ? 0 : data.country || 0,
+				difficulty:
+					typeof data.difficulty === "string"
+						? data.difficulty.toLowerCase() === "easy"
+							? 1
+							: data.difficulty.toLowerCase() === "medium"
+								? 2
+								: 3
+						: data.difficulty || 2,
+				score_multiplier: data.score_multiplier || 1,
+			};
+
+			const question = new Question(questionData);
+			const questionResult = await question.create(db);
+
+			if (!questionResult.success) {
+				return new Response(
+					JSON.stringify({ success: false, error: "Question creation failed" }),
+					{
+						headers: { "Content-Type": "application/json" },
+						status: 500,
+					},
+				);
+			}
+
+			if (!Array.isArray(data.options) || data.options.length !== 4) {
+				return new Response(
+					JSON.stringify({ success: false, error: "Must provide 4 options" }),
+					{
+						headers: { "Content-Type": "application/json" },
+						status: 400,
+					},
+				);
+			}
+
+			const createdOptions = [];
+			for (const opt of data.options) {
+				const optionData = {
+					question_id: question.id,
+					option: opt.option || "Placeholder option",
+					// Convert correct to TINYINT (0 or 1) as per schema
+					correct: opt.correct ? 1 : 0,
+				};
+
+				const option = new Option(optionData);
+				const optionResult = await option.create(db);
+
+				if (!optionResult.success) {
+					return new Response(
+						JSON.stringify({ success: false, error: "Option creation failed" }),
+						{
+							headers: { "Content-Type": "application/json" },
+							status: 500,
+						},
+					);
+				}
+				createdOptions.push({ id: option.id, ...optionData });
+			}
+
+			return new Response(
+				JSON.stringify({
+					success: true,
+					question_id: question.id,
+					options: createdOptions,
+				}),
+				{
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("POST", "/quiz/category", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+
+			const data = await request.json();
+			const categoryData = { name: data.name };
+			const category = new Category(categoryData);
+
+			const result = await category.create(db);
+			if (result.success) {
+				return new Response(
+					JSON.stringify({ success: true, category_id: category.id }),
+					{
+						headers: { "Content-Type": "application/json" },
+					},
+				);
+			} else {
+				return new Response(
+					JSON.stringify({ success: false, error: "Category creation failed" }),
+					{
+						headers: { "Content-Type": "application/json" },
+						status: 500,
+					},
+				);
+			}
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("POST", "/quiz/result", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			const data = await request.json();
+			const resultData = {
+				user_id: request.user.id,
+				quiz_id: data.quiz_id,
+				score: data.score,
+				time_taken: data.time_taken,
+			};
+			const resultObject = new Result(resultData);
+
+			const result = await resultObject.create(db);
+			if (result.success) {
+				return new Response(
+					JSON.stringify({ success: true, result_id: resultObject.id }),
+					{
+						headers: { "Content-Type": "application/json" },
+					},
+				);
+			} else {
+				return new Response(
+					JSON.stringify({ success: false, error: "Result creation failed" }),
+					{
+						headers: { "Content-Type": "application/json" },
+						status: 500,
+					},
+				);
+			}
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("GET", "/quizzes", async (_request, env) => {
+	try {
+		const db = getDB(env);
+		const quiz = new Quiz();
+		const quizzes = await quiz.loadAll(db);
+		return new Response(JSON.stringify({ success: true, quizzes }), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+// QUESTION
+router.add("GET", "/question", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id } = Object.fromEntries(new URL(request.url).searchParams);
+		const question = new Question();
+		const found = await question.load(db, id);
+		if (!found) return new Response("Not Found", { status: 404 });
+		return new Response(JSON.stringify(question), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("PUT", "/question", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const question = new Question(data);
+			if (!question.id)
+				return new Response("Missing question id", { status: 400 });
+			await question.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/question", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const { id } = await request.json();
+			const question = new Question({ id });
+			await question.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+// CATEGORY
+router.add("GET", "/category", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id } = Object.fromEntries(new URL(request.url).searchParams);
+		const category = new Category();
+		const found = await category.load(db, id);
+		if (!found) return new Response("Not Found", { status: 404 });
+		return new Response(JSON.stringify(category), {
+			headers: { "Content-Type": "application/json" },
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("PUT", "/category", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const category = new Category(data);
+			if (!category.id)
+				return new Response("Missing category id", { status: 400 });
+			await category.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/category", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const { id } = await request.json();
+			const category = new Category({ id });
+			await category.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+// OPTION
+router.add("GET", "/option", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id, question_id } = Object.fromEntries(
+			new URL(request.url).searchParams,
+		);
+		const option = new Option();
+		if (id) {
+			const found = await option.load(db, id);
+			if (!found) return new Response("Not Found", { status: 404 });
+			return new Response(JSON.stringify(option), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} else if (question_id) {
+			const options = await option.loadFromQuestion(db, question_id);
+			return new Response(JSON.stringify(options), {
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+		return new Response("Missing id or question_id", { status: 400 });
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("POST", "/option", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const option = new Option(data);
+			const result = await option.create(db);
+			if (!result.success) {
+				return new Response(
+					JSON.stringify({ success: false, error: "Option creation failed" }),
+					{
+						status: 500,
+						headers: { "Content-Type": "application/json" },
+					},
+				);
+			}
+			return new Response(
+				JSON.stringify({ success: true, option_id: option.id }),
+				{
+					headers: { "Content-Type": "application/json" },
+				},
+			);
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("PUT", "/option", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const option = new Option(data);
+			if (!option.id) return new Response("Missing option id", { status: 400 });
+			await option.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/option", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const { id } = await request.json();
+			const option = new Option({ id });
+			await option.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+// RESULT
+router.add("GET", "/result", async (request, env) => {
+	try {
+		const db = getDB(env);
+		const { id, user_id, quiz_id } = Object.fromEntries(
+			new URL(request.url).searchParams,
+		);
+		const resultObj = new Result();
+		if (id) {
+			const found = await resultObj.load(db, id);
+			if (!found) return new Response("Not Found", { status: 404 });
+			return new Response(JSON.stringify(resultObj), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} else if (user_id) {
+			const results = await resultObj.loadFromUser(db, user_id);
+			return new Response(JSON.stringify(results), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} else if (quiz_id) {
+			const results = await resultObj.loadFromQuiz(db, quiz_id);
+			return new Response(JSON.stringify(results), {
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+		return new Response("Missing id, user_id, or quiz_id", {
+			status: 400,
+		});
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
+router.add("PUT", "/result", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const data = await request.json();
+			const resultObj = new Result(data);
+			if (!resultObj.id)
+				return new Response("Missing result id", { status: 400 });
+			await resultObj.update(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
+router.add("DELETE", "/result", (request, env) =>
+	withAuth(request, env, async (request, env) => {
+		try {
+			const db = getDB(env);
+			if (!(await verifyAdmin(db, request.user))) {
+				return new Response("Unauthorized", { status: 401 });
+			}
+			const { id } = await request.json();
+			const resultObj = new Result({ id });
+			await resultObj.delete(db);
+			return new Response(JSON.stringify({ success: true }), {
+				headers: { "Content-Type": "application/json" },
+			});
+		} catch (e) {
+			return new Response(`Error: ${e.message}`, { status: 500 });
+		}
+	}),
+);
+
 export default {
 	async fetch(request, env, _ctx) {
-		const url = new URL(request.url);
-		var return_msg = "DB Test:\n";
-		var seed_msg = "DB Seeding:\n";
-		var logged_in = checkLoggedIn(request);
-
-		switch (url.pathname) {
-			case "/message":
-				if (logged_in) {
-					return new Response("Hello, Logged-in User!");
-				} else {
-					return new Response("Not logged in");
-				}
-			case "/random":
-				return new Response(crypto.randomUUID());
-			case "/db-test": {
-				try {
-					const db = getDB(env);
-					const result = await queryDB(db, "SELECT 1 as test");
-					return new Response(JSON.stringify(result), {
-						headers: { "Content-Type": "application/json" },
-					});
-				} catch (e) {
-					return new Response(`DB Error: ${e.message}`, { status: 500 });
-				}
-			}
-
-			case "/user/register": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const data = await request.json();
-					let userExists = new User();
-					userExists = await userExists.loadByEmail(db, data.email);
-
-					if (!data.name || !data.email || !data.password) {
-						return new Response(
-							JSON.stringify({
-								success: false,
-								error: "Missing required fields",
-							}),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					if (userExists) {
-						return new Response(
-							JSON.stringify({ success: false, error: "User already exists" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-
-					if (data.password.length < 6) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Password too short" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					// regex to check for valid email :thumbs_up:
-					const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-					if (!emailRegex.test(data.email)) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Invalid email format" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					if (data.name.length < 3) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Username too short" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					if (data.name.length >= 64) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Username too long" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-
-					const user = new User(data);
-					const result = await user.create(db);
-
-					if (result.success) {
-						const session = new Session({ user });
-						console.log("created new session object");
-
-						await session.create(db);
-
-						console.log("created new session in db");
-						return new Response(JSON.stringify({ session: session }), {
-							headers: {
-								"Content-Type": "application/json",
-								"Set-Cookie": `session_token=${session.token}; Path=/; HttpOnly; Secure; Max-Age=86400`,
-							},
-						});
-					} else {
-						return new Response(
-							JSON.stringify({ success: false, error: "User creation failed" }),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, { status: 500 });
-				}
-			}
-
-			case "/user/login": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const data = await request.json();
-					const user = new User();
-					await user.authenticate(db, data.email, data.password);
-
-					if (user.id) {
-						const session = new Session({ user: user });
-						await session.create(db);
-						return new Response(JSON.stringify({ success: true }), {
-							headers: {
-								"Content-Type": "application/json",
-								"Set-Cookie": `session_token=${session.token}; Path=/; HttpOnly; Secure; Max-Age=86400`,
-							},
-						});
-					} else {
-						return new Response(
-							JSON.stringify({
-								success: false,
-								error: "Incorrect email or password.",
-							}),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, { status: 500 });
-				}
-			}
-
-			case "/user/logout": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const cookieHeader = request.headers.get("Cookie");
-					const cookies = Object.fromEntries(
-						cookieHeader?.split("; ").map((c) => {
-							const [key, value] = c.split("=");
-							return [key, value];
-						}) || [],
-					);
-					const sessionToken = cookies.session_token;
-
-					if (!sessionToken) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Not logged in" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					const session = new Session();
-					const loaded = await session.loadByToken(db, sessionToken);
-					if (!loaded) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Invalid session" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					await session.delete(db);
-					return new Response(JSON.stringify({ success: true }), {
-						headers: {
-							"Content-Type": "application/json",
-							"Set-Cookie": `session_token=; Path=/; HttpOnly; Secure; Max-Age=0`,
-						},
-					});
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, { status: 500 });
-				}
-			}
-
-			case "/user": {
-				if (request.method !== "GET") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const cookieHeader = request.headers.get("Cookie");
-					const cookies = Object.fromEntries(
-						cookieHeader?.split("; ").map((c) => {
-							const [key, value] = c.split("=");
-							return [key, value];
-						}) || [],
-					);
-					const sessionToken = cookies.session_token;
-					if (!sessionToken) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Not logged in" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					const session = new Session();
-					const loaded = await session.loadByToken(db, sessionToken);
-					if (!loaded) {
-						return new Response(
-							JSON.stringify({ success: false, error: "Invalid session" }),
-							{ headers: { "Content-Type": "application/json" }, status: 400 },
-						);
-					}
-					const user = new User();
-					await user.load(db, session.user.id);
-					return new Response(
-						JSON.stringify({
-							success: true,
-							user: {
-								id: user.id,
-								email: user.email,
-								name: user.name,
-								is_admin: user.is_admin,
-							},
-						}),
-						{ headers: { "Content-Type": "application/json" } },
-					);
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, { status: 500 });
-				}
-			}
-			case "/quiz/new": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const { Quiz } = await import("./db/classes.js");
-					const data = await request.json();
-					const quizData = {
-						name: data.name || "Placeholder name",
-						score_needed: data.score_needed || "Placeholder name",
-						max_time: data.max_time || "Placeholder name",
-					};
-					const quiz = new Quiz(quizData);
-
-					const result = await quiz.create(db);
-					if (result.success) {
-						return new Response(
-							JSON.stringify({ success: true, user_id: user.id }),
-							{ headers: { "Content-Type": "application/json" } },
-						);
-					} else {
-						return new Response(
-							JSON.stringify({ success: false, error: "User creation failed" }),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, { status: 500 });
-				}
-			}
-			case "/quiz/question": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const { Question } = await import("./db/classes.js");
-					const data = await request.json();
-					const questionData = {
-						text: data.text || "Placeholder",
-						country: data.country || "Placeholder country",
-						difficulty: data.difficulty || "Placeholder",
-						score_multiplier: data.score_multiplier || "Placeholder",
-					};
-					const question = new Question(questionData);
-
-					const result = await question.create(db);
-					if (result.success) {
-						return new Response(
-							JSON.stringify({ success: true, user_id: user.id }),
-							{ headers: { "Content-Type": "application/json" } },
-						);
-					} else {
-						return new Response(
-							JSON.stringify({ success: false, error: "User creation failed" }),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
-			case "/quiz/category": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const { Category } = await import("./db/classes.js");
-					const data = await request.json();
-					const categoryData = {
-						create_date: data.create_date || "Placeholder",
-						update_date: data.update_date || "Placeholder",
-					};
-					const category = new Category(categoryData);
-
-					const result = await category.create(db);
-					if (result.success) {
-						return new Response(
-							JSON.stringify({ success: true, user_id: user.id }),
-							{ headers: { "Content-Type": "application/json" } },
-						);
-					} else {
-						return new Response(
-							JSON.stringify({ success: false, error: "User creation failed" }),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
-			case "/quiz/result": {
-				if (request.method !== "POST") {
-					return new Response("Method Not Allowed", { status: 405 });
-				}
-				try {
-					const db = getDB(env);
-					const { Result } = await import("./db/classes.js");
-					const data = await request.json();
-					const resultData = {
-						score: data.score || "Placeholder",
-						time_taken: data.time_taken || "Placeholder",
-						create_date: data.create_date || "Placeholder",
-						update_date: data.update_date || "Placeholder",
-					};
-					const resultObject = new Result(resultData);
-
-					const result = await resultObject.create(db);
-					if (result.success) {
-						return new Response(
-							JSON.stringify({ success: true, user_id: user.id }),
-							{ headers: { "Content-Type": "application/json" } },
-						);
-					} else {
-						return new Response(
-							JSON.stringify({
-								success: false,
-								error: "User creation failed",
-							}),
-							{ headers: { "Content-Type": "application/json" }, status: 500 },
-						);
-					}
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
-
-			// simple test route to create and test all classes, teacher wanted it :P ignore the formatting that messed up with merging w main
-			case "/test-db": {
-				try {
-					const db = getDB(env);
-					console.log("Creating user...");
-					return_msg += "Creating user...\n";
-					const newUser = new User({
-						email: "bV5yaKxsxxs@example.com",
-						name: "Test User",
-						password: "password",
-					});
-					await newUser.create(db);
-					console.log("Loading user...");
-					return_msg += "Loading user...\n";
-					const user = new User();
-					await user.load(db, 1);
-					console.log(user);
-					console.log("Creating category...");
-					return_msg += "Creating category...\n";
-					const newCategory = new Category({ name: "Culture" });
-					await newCategory.create(db);
-					console.log("Loading category...");
-					return_msg += "Loading category...\n";
-					const category = new Category();
-					await category.load(db, 1);
-					console.log(category);
-					console.log("Creating quiz...");
-					return_msg += "Creating quiz...\n";
-					const newQuiz = new Quiz({
-						name: "Test Quiz",
-						description: "This is a test quiz",
-						score_needed: 5,
-						max_time: 30,
-					});
-					await newQuiz.create(db);
-					console.log("Loading quiz...");
-					return_msg += "Loading quiz...\n";
-					const quiz = new Quiz();
-					await quiz.load(db, 1);
-					console.log(quiz);
-					console.log("Creating question...");
-					return_msg += "Creating question...\n";
-					const newQuestion = new Question({
-						quiz_id: 1,
-						category_id: 1,
-						text: "What is the capital of Croatia?",
-					});
-					await newQuestion.create(db);
-					console.log("Loading question...");
-					return_msg += "Loading question...\n";
-					const question = new Question();
-					await question.load(db, 1);
-					console.log(question);
-					console.log("Creating option...");
-					return_msg += "Creating option...\n";
-					const newOption = new Option({
-						question_id: 1,
-						option: "Zagreb",
-						correct: true,
-					});
-					await newOption.create(db);
-					console.log("Loading option...");
-					return_msg += "Loading option...\n";
-					const option = new Option();
-					await option.load(db, 1);
-					console.log(option);
-					console.log("Creating result...");
-					return_msg += "Creating result...\n";
-					const newResult = new Result({
-						user_id: 1,
-						quiz_id: 1,
-						score: 10,
-						time_taken: 25,
-					});
-					await newResult.create(db);
-					console.log("Loading result...");
-					return_msg += "Loading result...\n";
-					const result = new Result();
-					await result.load(db, 1);
-					console.log(result);
-					return new Response(`${return_msg}Done!`);
-				} catch (e) {
-					return new Response(`Error: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
-
-			// route to seed the database with mockup data for testing
-			case "/seed-db": {
-				try {
-					const db = getDB(env);
-					seed_msg += "Seeding database...\n";
-					const users = [
-						["test@example.com", "Test User", "password", 1],
-						["colin@examplecom", "Colin", "password"],
-						["maarten@example.com", "Maarten", "password"],
-						["brandon@example.com", "Brandon", "password"],
-					];
-					for (const [email, name, password, is_admin] of users) {
-						const user = new User({
-							email,
-							name,
-							password,
-							is_admin: is_admin || 0,
-						});
-						await user.create(db);
-					}
-
-					seed_msg += "Users created.\n";
-
-					const categories = ["Culture", "History", "Geography", "Language"];
-					for (const name of categories) {
-						const category = new Category({ name });
-						await category.create(db);
-					}
-					seed_msg += "Categories created.\n";
-
-					const quizzes = [
-						["Level 1", 5, 30, 30],
-						["Level 2", 7, 45, 20],
-						["Level 3", 9, 60, 15],
-						["Level 4", 12, 90, 10],
-					];
-					for (const [name, country, score_needed, max_time] of quizzes) {
-						const quiz = new Quiz({ name, country, score_needed, max_time });
-						await quiz.create(db);
-					}
-					seed_msg += "Quizzes created.\n";
-
-					const questions = [
-						["What is the capital of Croatia?", "HR", 1, 1, 1, 1],
-						["What is the capital of the Netherlands?", "NL", 1, 1, 1, 1],
-						["Which country is famous for its tulip fields?", "NL", 1, 3, 2, 1],
-						[
-							"Which country is known for the traditional dance called 'kolo'?",
-							"HR",
-							1,
-							1,
-							2,
-							1,
-						],
-						[
-							"What is the name of the Dutch national holiday celebrating the king's birthday?",
-							"NL",
-							1,
-							2,
-							2,
-							1,
-						],
-						[
-							"Which Croatian city is famous for its ancient Roman amphitheater?",
-							"HR",
-							1,
-							1,
-							2,
-							1,
-						],
-						[
-							"What is a popular Dutch food made from raw herring?",
-							"NL",
-							1,
-							3,
-							2,
-							1,
-						],
-						[
-							"Which country celebrates Sinterklaas on December 5th?",
-							"NL",
-							1,
-							2,
-							1,
-							1,
-						],
-						[
-							"Which country is known for the tradition of painting Easter eggs called 'pisanice'?",
-							"HR",
-							1,
-							1,
-							1,
-							1,
-						],
-						[
-							"What is the name of the Croatian folk music style characterized by group singing?",
-							"HR",
-							1,
-							1,
-							2,
-							1,
-						],
-						[
-							"Which country is famous for its windmills and canals?",
-							"NL",
-							1,
-							3,
-							1,
-							1,
-						],
-						[
-							"Which country is known for the dish 'pašticada'?",
-							"HR",
-							1,
-							1,
-							1,
-							1,
-						],
-						["What is the Dutch word for 'cheese'?", "NL", 1, 2, "Easy", 1],
-						["Which country is home to the city of Split?", "HR", 1, 1, 1, 1],
-						[
-							"Which country is home to the city of Rotterdam?",
-							"NL",
-							1,
-							2,
-							1,
-							1,
-						],
-					];
-					for (var [
-						text,
-						country,
-						quiz_id,
-						category_id,
-						difficulty,
-						score_multiplier,
-					] of questions) {
-						if (country === "HR") {
-							country = 0;
-						} else {
-							country = 1;
-						}
-						const question = new Question({
-							text,
-							country,
-							quiz_id,
-							category_id,
-							difficulty,
-							score_multiplier,
-						});
-						await question.create(db);
-					}
-					seed_msg += "Questions created.\n";
-
-					const options = [
-						// 1: What is the capital of Croatia?
-						[1, "Zagreb", true],
-						[1, "Split", false],
-						[1, "Dubrovnik", false],
-						[1, "Amsterdam", false],
-						// 2: What is the capital of the Netherlands?
-						[2, "Amsterdam", true],
-						[2, "Rotterdam", false],
-						[2, "The Hague", false],
-						[2, "Zagreb", false],
-						// 3: Which country is famous for its tulip fields?
-						[3, "Netherlands", true],
-						[3, "Croatia", false],
-						[3, "France", false],
-						[3, "Italy", false],
-						// 4: Which country is known for the traditional dance called 'kolo'?
-						[4, "Croatia", true],
-						[4, "Netherlands", false],
-						[4, "Germany", false],
-						[4, "Serbia", false],
-						// 5: What is the name of the Dutch national holiday celebrating the king's birthday?
-						[5, "King's Day (Koningsdag)", true],
-						[5, "Queen's Day", false],
-						[5, "Liberation Day", false],
-						[5, "Carnival", false],
-						// 6: Which Croatian city is famous for its ancient Roman amphitheater?
-						[6, "Pula", true],
-						[6, "Split", false],
-						[6, "Dubrovnik", false],
-						[6, "Zadar", false],
-						// 7: What is a popular Dutch food made from raw herring?
-						[7, "Haring", true],
-						[7, "Stroopwafel", false],
-						[7, "Bitterballen", false],
-						[7, "Pašticada", false],
-						// 8: Which country celebrates Sinterklaas on December 5th?
-						[8, "Netherlands", true],
-						[8, "Croatia", false],
-						[8, "Belgium", false],
-						[8, "Germany", false],
-						// 9: Which country is known for the tradition of painting Easter eggs called 'pisanice'?
-						[9, "Croatia", true],
-						[9, "Netherlands", false],
-						[9, "Poland", false],
-						[9, "Italy", false],
-						// 10: What is the name of the Croatian folk music style characterized by group singing?
-						[10, "Klapa", true],
-						[10, "Tamburica", false],
-						[10, "Fado", false],
-						[10, "Chanson", false],
-						// 11: Which country is famous for its windmills and canals?
-						[11, "Netherlands", true],
-						[11, "Croatia", false],
-						[11, "Belgium", false],
-						[11, "France", false],
-						// 12: Which country is known for the dish 'pašticada'?
-						[12, "Croatia", true],
-						[12, "Netherlands", false],
-						[12, "Italy", false],
-						[12, "France", false],
-						// 13: What is the Dutch word for 'cheese'?
-						[13, "Kaas", true],
-						[13, "Fromage", false],
-						[13, "Sir", false],
-						[13, "Queso", false],
-						// 14: Which country is home to the city of Split?
-						[14, "Croatia", true],
-						[14, "Netherlands", false],
-						[14, "Italy", false],
-						[14, "France", false],
-						// 15: Which country is home to the city of Rotterdam?
-						[15, "Netherlands", true],
-						[15, "Croatia", false],
-						[15, "Belgium", false],
-						[15, "Germany", false],
-					];
-					for (const [question_id, option, correct] of options) {
-						const opt = new Option({ question_id, option, correct });
-						await opt.create(db);
-					}
-					seed_msg += "Options created.\n";
-
-					const results = [
-						[1, 1, 8, 50],
-						[2, 2, 7, 70],
-						[3, 3, 6, 40],
-						[4, 4, 5, 25],
-					];
-					for (const [user_id, quiz_id, score, time_taken] of results) {
-						const result = new Result({ user_id, quiz_id, score, time_taken });
-						await result.create(db);
-					}
-					seed_msg += "Results created.\n";
-
-					seed_msg += "Database seeding completed.\n";
-					return new Response(`${seed_msg}Done!`);
-				} catch (e) {
-					return new Response(`${seed_msg}\nError: ${e.message}`, {
-						status: 500,
-					});
-				}
-			}
-			default:
-				return new Response("Not Found", { status: 404 });
-		}
+		return router.route(request, env);
 	},
 };

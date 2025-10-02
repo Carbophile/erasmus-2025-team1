@@ -53,7 +53,7 @@ export class User {
 		return [];
 	}
 	async loadLeaderboard(db, limit = null) {
-		var sql = `SELECT id, email, name, SUM(results.score) as total_score FROM users INNER JOIN results ON users.id = results.user_id GROUP BY users.id ORDER BY total_score DESC`;
+		var sql = `SELECT users.id, users.email, users.name, SUM(results.score) as total_score FROM users INNER JOIN results ON users.id = results.user_id GROUP BY users.id ORDER BY total_score DESC`;
 		var result;
 		if (limit) {
 			sql += ` LIMIT ?`;
@@ -107,6 +107,11 @@ export class User {
 
 		if (result.success) this.id = result.meta.last_row_id;
 		return result;
+	}
+
+	verifyPassword(password) {
+		if (!this.password || !password) return false;
+		return bcrypt.compareSync(password, this.password);
 	}
 
 	async update(db) {
@@ -221,7 +226,7 @@ export class Question {
 		const sql = `SELECT * FROM questions`;
 		const result = await queryDB(db, sql, []);
 		if (result?.results && result.results.length > 0) {
-			this.items = result.results.map((row) => new User(row));
+			this.items = result.results.map((row) => new Question(row));
 			return this.items;
 		}
 		this.items = [];
@@ -261,15 +266,24 @@ export class Question {
 		return [];
 	}
 
-	async loadFromCountry(db, country) {
-		const sql = `SELECT * FROM questions WHERE country = ?`;
-		const result = await queryDB(db, sql, [country]);
-		if (result?.results && result.results.length > 0) {
-			this.items = result.results.map((row) => new Question(row));
-			return this.items;
+	async loadRandom(db, excludeIds = []) {
+		let sql = `SELECT * FROM questions`;
+		let params = [];
+
+		if (excludeIds.length > 0) {
+			const placeholders = excludeIds.map(() => "?").join(",");
+			sql += ` WHERE id NOT IN (${placeholders})`;
+			params = excludeIds;
 		}
-		this.items = [];
-		return [];
+
+		sql += ` ORDER BY RANDOM() LIMIT 1`;
+
+		const result = await queryDB(db, sql, params);
+		if (result?.results && result.results.length > 0) {
+			Object.assign(this, result.results[0]);
+			return result.results[0];
+		}
+		return null;
 	}
 
 	async create(db) {
@@ -565,11 +579,15 @@ export class Session {
 		this.expires_at =
 			this.expires_at ||
 			new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+		// Use environment variable for JWT secret, fallback to placeholder for development
+		const jwtSecret = process.env.JWT_SECRET || "placeholder secret";
+
 		this.token =
 			this.token ||
 			jwt.sign(
 				{ user_id: this.user.id, name: this.user.name, email: this.user.email },
-				"placeholder secret",
+				jwtSecret,
 				{
 					expiresIn: "24h",
 				},

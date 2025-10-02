@@ -23,62 +23,90 @@
       <div class="profile-icon"> <a href="../profil/profil.html"><img src="../leadeboard/img/images-removebg-preview.png" alt="avatar"></a></div>
     </header>
 
-    <main class="leaderboard">
-      <div class="player">
-        <div class="left">
-          <span>1</span>
-          <div class="avatar">
-            <img src="../leadeboard/img/user (3).png" alt="avatar">
-          </div>
-        </div>
-        <div class="right">Ime1 - 100</div>
-      </div>
-
-      <div class="player">
-        <div class="left">
-          <span>2</span>
-          <div class="avatar">
-            <img src="../leadeboard/img/user (3).png" alt="avatar">
-          </div>
-        </div>
-        <div class="right">Ime2 - 90</div>
-      </div>
-
-      <div class="player">
-        <div class="left">
-          <span>3</span>
-          <div class="avatar">
-            <img src="../leadeboard/img/user (3).png" alt="avatar">
-          </div>
-        </div>
-        <div class="right">Ime3 - 80</div>
-      </div>
-
-      <div class="player">
-        <div class="left">
-          <span>4</span>
-          <div class="avatar">
-            <img src="../leadeboard/img/user (3).png" alt="avatar">
-          </div>
-        </div>
-        <div class="right">Ime4 - 70</div>
-      </div>
-
-      <div class="player">
-        <div class="left">
-          <span>5</span>
-          <div class="avatar">
-            <img src="../leadeboard/img/user (3).png" alt="avatar">
-          </div>
-        </div>
-        <div class="right">Ime5 - 60</div>
-      </div>
+    <main class="leaderboard" id="leaderboard-container">
+      <!-- Dynamic leaderboard content will be loaded here -->
     </main>
 
     <footer>
-      <span>Next page ➝</span>
+      <button id="load-more-btn" style="background: none; border: none; cursor: pointer; font-size: 16px;">
+        <span>Load More ➝</span>
+      </button>
     </footer>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '../login/index.html';
+        return;
+      }
+
+      let currentPage = 1;
+      const pageSize = 10;
+      let hasMore = true;
+
+      async function loadLeaderboard(page = 1, append = false) {
+        try {
+          const response = await fetch(`/leaderboard?limit=${pageSize}&offset=${(page - 1) * pageSize}`);
+          const data = await response.json();
+
+          if (data.success) {
+            const container = document.getElementById('leaderboard-container');
+
+            if (!append) {
+              container.innerHTML = '';
+            }
+
+            data.leaderboard.forEach((player, index) => {
+              const globalRank = (page - 1) * pageSize + index + 1;
+              const playerDiv = document.createElement('div');
+              playerDiv.className = 'player';
+              playerDiv.innerHTML = `
+                <div class="left">
+                  <span>${globalRank}</span>
+                  <div class="avatar">
+                    <img src="../leadeboard/img/user (3).png" alt="avatar">
+                  </div>
+                </div>
+                <div class="right">${player.name} - ${player.total_score || 0}</div>
+              `;
+              container.appendChild(playerDiv);
+            });
+
+            hasMore = data.leaderboard.length === pageSize;
+            document.getElementById('load-more-btn').style.display = hasMore ? 'block' : 'none';
+          }
+        } catch (error) {
+          console.error('Error loading leaderboard:', error);
+        }
+      }
+
+      document.getElementById('load-more-btn').addEventListener('click', () => {
+        if (hasMore) {
+          currentPage++;
+          loadLeaderboard(currentPage, true);
+        }
+      });
+
+      // Add dropdown menu functionality
+      const menuIcon = document.querySelector('.menu-icon');
+      const dropdownMenu = document.querySelector('.dropdown-menu');
+
+      menuIcon.addEventListener('click', () => {
+        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!menuIcon.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.style.display = 'none';
+        }
+      });
+
+      loadLeaderboard();
+    });
+  </script>
 
 </body>
 
