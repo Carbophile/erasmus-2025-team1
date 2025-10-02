@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"is_admin" TINYINT NOT NULL,
 	"create_date" DATETIME NOT NULL,
 	"update_date" DATETIME NOT NULL,
-	PRIMARY KEY ("id")
+	PRIMARY KEY ("id"),
+	UNIQUE("email")
 );
 
 -- Dumping structure for table migrations.categories
@@ -85,6 +86,18 @@ CREATE TABLE IF NOT EXISTS "results" (
 	PRIMARY KEY ("id"),
 	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
 	FOREIGN KEY ("quiz_id") REFERENCES "quizes"("id")  ON DELETE SET NULL
+);
+
+-- Dumping structure for table migrations.results
+CREATE TABLE IF NOT EXISTS "sessions" (
+	"id" INTEGER NOT NULL,
+	"user_id" INTEGER NOT NULL,
+	"token" varchar(640) NOT NULL,
+	"expires_at" DATETIME NOT NULL,
+	"create_date" DATETIME NOT NULL,
+	"update_date" DATETIME NULL,
+	PRIMARY KEY ("id"),
+	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
 );
 
 -- Re-enable settings
