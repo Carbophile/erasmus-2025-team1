@@ -6,11 +6,38 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Jednostavan Kviz - Konstruktor</title>
     <link href="../questions/css/questions.css" rel="stylesheet" />
+    <style>
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .fade-in {
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .finish-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
     <div class="card" id="app">
         <h1>Quiz Beginner</h1>
+        <div class="meta-row">
+            <div class="lives" id="lives">
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
+            <div class="timer" id="timer">00:30</div>
+            <div class="points" id="points">Score: 0</div>
+        </div>
         <div class="card-content">
             <div class="image-container">
                 <img id="question-image" src="" alt="Slika pitanja" />
@@ -27,8 +54,10 @@
                 this.questions = questions;
                 this.index = 0;
                 this.score = 0;
+                this.lives = 3;
                 this.userAnswers = new Array(questions.length).fill(null);
                 this.showCorrectOnSubmit = opts.showCorrectOnSubmit ?? true;
+                this.livesContainer = document.getElementById('lives');
                 this.render();
             }
 
@@ -36,8 +65,6 @@
                 this.container.innerHTML = `
           <div class="meta-block">
             <div class="progress" id="progress"></div>
-            <div class="timer" id="timer">00:30</div>
-            <div class="points" id="points">Score: 0</div>
             <div class="question-block">
               <div class="question" id="question"></div>
             </div>
@@ -62,11 +89,12 @@
                 this.$resultArea = this.container.querySelector('#resultArea');
                 this.timerDuration = 30;
                 this.timer = null;
-                this.timerElement = this.container.querySelector('#timer');
-                this.$points = this.container.querySelector('#points');
+                this.timerElement = document.getElementById('timer');
+                this.$points = document.getElementById('points');
 
-                this.$prevBtn.addEventListener('click', () => this.prev());
-                this.$nextBtn.addEventListener('click', () => this.next());
+                this.$prevBtn.onclick = () => this.prev();
+                this.$nextBtn.onclick = () => this.next();
+
 
                 window.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowRight') this.next();
@@ -87,7 +115,17 @@
 
                     if (timeLeft <= 0) {
                         clearInterval(this.timer);
-                        this.next();
+                        // fade-out animacija kad timer istekne
+                        const questionBlock = this.container.querySelector('.question-block');
+                        const answersBlock = this.container.querySelector('.answers');
+                        if (questionBlock) questionBlock.classList.remove('fade-in');
+                        if (answersBlock) answersBlock.classList.remove('fade-in');
+                        if (questionBlock) questionBlock.classList.add('fade-out');
+                        if (answersBlock) answersBlock.classList.add('fade-out');
+                        setTimeout(() => {
+                            this.loseLife();
+                            this.next();
+                        }, 300);
                     }
                 }, 1000);
             }
@@ -99,6 +137,14 @@
             }
 
             showQuestion() {
+                // Animacija fade-in
+                const questionBlock = this.container.querySelector('.question-block');
+                const answersBlock = this.container.querySelector('.answers');
+                if (questionBlock) questionBlock.classList.remove('fade-out');
+                if (answersBlock) answersBlock.classList.remove('fade-out');
+                if (questionBlock) questionBlock.classList.add('fade-in');
+                if (answersBlock) answersBlock.classList.add('fade-in');
+
                 const q = this.questions[this.index];
                 this.$question.textContent = `${this.index + 1}. ${q.text}`;
                 this.$answers.innerHTML = '';
@@ -131,12 +177,45 @@
             }
 
             select(choiceIndex) {
+                if (this.userAnswers[this.index] !== null) return;
+
                 this.userAnswers[this.index] = choiceIndex;
                 Array.from(this.$answers.children).forEach((el, i) => {
                     el.classList.toggle('selected', i === choiceIndex);
                 });
 
+                const currentQuestion = this.questions[this.index];
+                if (choiceIndex !== currentQuestion.answerIndex) {
+                    this.loseLife();
+                }
+
                 this.calculateScore();
+
+                setTimeout(() => {
+                    this.next();
+                }, 1000);
+            }
+
+            loseLife() {
+                if (this.lives > 0) {
+                    this.lives--;
+                    this.updateLivesDisplay();
+
+                    if (this.lives === 0) {
+                        this.gameOver();
+                        return;
+                    }
+                }
+            }
+
+            updateLivesDisplay() {
+                const hearts = this.livesContainer.querySelectorAll('.heart');
+                hearts.forEach((heart, index) => {
+                    if (index >= this.lives) {
+                        heart.classList.add('lost');
+                        heart.textContent = '💔';
+                    }
+                });
             }
 
             calculateScore() {
@@ -149,12 +228,22 @@
             }
 
             next() {
-                if (this.index < this.questions.length - 1) {
-                    this.index++;
-                    this.showQuestion();
-                } else {
-                    this.finish();
-                }
+                if (this.lives === 0) return;
+                const questionBlock = this.container.querySelector('.question-block');
+                const answersBlock = this.container.querySelector('.answers');
+                if (questionBlock) questionBlock.classList.remove('fade-in');
+                if (answersBlock) answersBlock.classList.remove('fade-in');
+                if (questionBlock) questionBlock.classList.add('fade-out');
+                if (answersBlock) answersBlock.classList.add('fade-out');
+
+                setTimeout(() => {
+                    if (this.index < this.questions.length - 1) {
+                        this.index++;
+                        this.showQuestion();
+                    } else {
+                        this.finish();
+                    }
+                }, 300);
             }
 
             prev() {
@@ -173,12 +262,70 @@
             updateButtons() {
                 this.$prevBtn.disabled = this.index === 0;
                 this.$nextBtn.textContent = (this.index === this.questions.length - 1) ? 'Finish' : 'Next';
+
+                if (this.lives === 0) {
+                    this.$prevBtn.disabled = true;
+                    this.$nextBtn.disabled = true;
+                }
+            }
+
+            gameOver() {
+                clearInterval(this.timer);
+                this.$resultArea.innerHTML = `
+                    <div class="result game-over">
+                        <strong>Game Over!</strong><br>
+                        You ran out of lives.<br>
+                        Final Score: ${this.score} / ${this.questions.length}
+                    </div>
+                `;
+                this.timerElement.textContent = '00:00';
+
+                Array.from(this.$answers.children).forEach(el => {
+                    el.style.pointerEvents = 'none';
+                    el.style.opacity = '0.5';
+                });
             }
 
             finish() {
+                clearInterval(this.timer);
                 this.calculateScore();
-                this.$resultArea.innerHTML = `<div class="result">Score: ${this.score} / ${this.questions.length}</div>`;
+                const percentage = Math.round((this.score / this.questions.length) * 100);
+                let message = '';
+                let resultClass = '';
+
+                // Sakrij pitanje, odgovore i sliku
+                const questionBlock = this.container.querySelector('.question-block');
+                const answersBlock = this.container.querySelector('.answers');
+                const imageContainer = document.querySelector('.image-container');
+                if (questionBlock) questionBlock.style.display = 'none';
+                if (answersBlock) answersBlock.style.display = 'none';
+                if (imageContainer) imageContainer.style.display = 'none';
+
+                this.$resultArea.innerHTML = `
+                    <div class="result ${resultClass} fade-in finish-center">
+                        <div style="font-size:2rem; font-weight:bold; margin-bottom:10px;"> Quiz Finished! </div>
+                        <div style="font-size:1.3rem; margin-bottom:10px;">
+                            Final Score: <span style="color:#fff;">${this.score}</span> / ${this.questions.length} (${percentage}%)
+                        </div>
+                        <div style="font-size:1.1rem;">
+                            Lives remaining: <span style="color:#fff;">${this.lives}</span>
+                        </div>
+                        <a id="goHomeLink" href="../leadeboard/home.html" style="margin-top:30px; padding:12px 32px; border-radius:10px; background:#FF76CE; color:#fff; font-size:1.1rem; border:none; cursor:pointer; text-decoration:none; display:inline-block;">Go to Home</a>
+                    </div>
+                `;
                 this.timerElement.textContent = '00:00';
+
+                // Fade-out efekt na link klik
+                const link = document.getElementById('goHomeLink');
+                if (link) {
+                    link.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        document.body.style.opacity = '0';
+                        setTimeout(() => {
+                            window.location.href = link.getAttribute('href');
+                        }, 300);
+                    });
+                }
             }
         }
 
