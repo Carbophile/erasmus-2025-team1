@@ -103,19 +103,37 @@
   </div>
 </div>
 <script>
-  let users = [
-    {id: 1, name: "Alice Johnson", email: "alice@example.com", score: 250, results: true, admin: true},
-    {id: 2, name: "Bob Smith", email: "bob@example.com", score: 180, results: true, admin: false},
-    {id: 3, name: "Charlie Lee", email: "charlie@example.com", score: 310, results: true, admin: false},
-    {id: 4, name: "Diana Prince", email: "diana@example.com", score: 400, results: true, admin: true}
-  ];
   const tableBody = document.getElementById("user-table-body");
   const formOverlay = document.getElementById("form-overlay");
   const form = document.getElementById("user-form");
   const formTitle = document.getElementById("form-title");
   const submitBtn = form.querySelector(".submit-btn");
+
   let deleteTarget = null;
-  function renderTable() {
+
+  // 🔹 Fetch and render users
+  async function fetchUsers() {
+    try {
+      const response = await fetch("/user/all", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        renderTable(data.users);
+      } else {
+        alert(data.error || "Failed to load users");
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  }
+
+  function renderTable(users) {
     tableBody.innerHTML = "";
     users.forEach(user => {
       const row = document.createElement("tr");
@@ -124,26 +142,28 @@
         <td>${user.name}</td>
         <td>${user.email}</td>
         <td>${user.score}</td>
-        <td>${user.results ? `<a href="userResult?id=${user.id}" class="btn small">Show</a>` : `<span style="color:#888;">No Results</span>`}</td>
+        <td>${user.results && user.results.length > 0 
+            ? `<a href="userResult?id=${user.id}" class="btn small">Show</a>` 
+            : `<span style="color:#888;">No Results</span>`}</td>
         <td>${user.admin ? "✔️" : "❌"}</td>
-        <td><button class="icon-btn" onclick="openForm(${user.id})"><i class="fa fa-pen"></i></button></td>
+        <td><button class="icon-btn" onclick="openForm(${user.id}, '${user.name}', '${user.email}', ${user.score}, ${user.admin})"><i class="fa fa-pen"></i></button></td>
         <td><button class="icon-btn danger" onclick="openDelete(${user.id})"><i class="fa fa-trash"></i></button></td>
       `;
       tableBody.appendChild(row);
     });
   }
-  renderTable();
-  function openForm(id = null) {
+
+  // 🔹 Open Add/Edit Form
+  function openForm(id = null, name = "", email = "", score = 0, admin = false) {
     form.reset();
     if (id) {
-      const u = users.find(u => u.id === id);
       formTitle.textContent = "Edit User";
       submitBtn.textContent = "Update";
-      form.id.value = u.id;
-      form.name.value = u.name;
-      form.email.value = u.email;
-      form.score.value = u.score;
-      form.admin.value = u.admin;
+      form.id.value = id;
+      form.name.value = name;
+      form.email.value = email;
+      form.score.value = score;
+      form.admin.value = admin ? "true" : "false";
     } else {
       formTitle.textContent = "Add User";
       submitBtn.textContent = "Save";
@@ -151,47 +171,91 @@
     }
     formOverlay.style.display = "flex";
   }
-  form.addEventListener("submit", e => {
+
+  // 🔹 Handle form submit (Add/Edit user)
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
-    if (data.id) {
-      const idx = users.findIndex(u => u.id == data.id);
-      users[idx] = {
-        id: Number(data.id),
-        name: data.name,
-        email: data.email,
-        score: Number(data.score),
-        results: true,
-        admin: data.admin === "true"
-      };
-    } else {
-      const newUser = {
-        id: users.length ? Math.max(...users.map(u => u.id)) + 1 : 1,
-        name: data.name,
-        email: data.email,
-        score: Number(data.score),
-        results: true,
-        admin: data.admin === "true"
-      };
-      users.push(newUser);
+    const userData = {
+      name: data.name,
+      email: data.email,
+      score: Number(data.score),
+      admin: data.admin === "true"
+    };
+
+    try {
+      let response;
+      if (data.id) {
+        response = await fetch(`/user/${data.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(userData),
+        });
+      } else {
+        response = await fetch("/user/new", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(userData),
+        });
+      }
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        fetchUsers();
+        closeOverlay("form-overlay");
+      } else {
+        alert(result.error || "Save failed");
+      }
+    } catch (err) {
+      console.error("Error saving user:", err);
     }
-    renderTable();
-    closeOverlay("form-overlay");
   });
+
+  // 🔹 Delete confirmation
   function openDelete(id) {
     deleteTarget = id;
     document.getElementById("delete-overlay").style.display = "flex";
   }
-  function confirmDelete() {
+
+  async function confirmDelete() {
     if (!deleteTarget) return;
-    users = users.filter(u => u.id !== deleteTarget);
-    renderTable();
-    closeOverlay("delete-overlay");
-    deleteTarget = null;
+    try {
+      const response = await fetch(`/user/${deleteTarget}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        fetchUsers();
+        closeOverlay("delete-overlay");
+        deleteTarget = null;
+      } else {
+        alert(result.error || "Delete failed");
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err);
+    }
   }
+
   function closeOverlay(id) {
     document.getElementById(id).style.display = "none";
   }
+
+  // Load users on page load
+  fetchUsers();
 </script>
+
 </body>
 </html>
