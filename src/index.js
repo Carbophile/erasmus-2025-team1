@@ -46,7 +46,6 @@ router.add("GET", "/user", async (request, env) => {
 		if (id) found = await user.load(db, id);
 		else if (email) found = await user.loadByEmail(db, email);
 		if (!found) return new Response("Not Found", { status: 404 });
-		// remove password from user object
 		delete user.password;
 		return new Response(JSON.stringify(user), {
 			headers: { "Content-Type": "application/json" },
@@ -64,21 +63,18 @@ router.add("PATCH", "/user", (request, env) =>
 
 			if (!data.id) return new Response("Missing user id", { status: 400 });
 
-			// Fetch existing user from D1
 			const existingUserResult = await db
 				.prepare("SELECT * FROM users WHERE id = ?")
 				.bind(data.id)
-				.first(); // D1 method for a single row
+				.first(); 
 
 			if (!existingUserResult)
 				return new Response("User not found", { status: 404 });
 
-			// a user can only update their own data, unless they are an admin
 			if (request.user.id !== existingUserResult.id && !request.user.is_admin) {
 				return new Response("Forbidden", { status: 403 });
 			}
 
-			// Merge existing data with new data
 			const userToUpdate = {
 				id: existingUserResult.id,
 				name: data.name ?? existingUserResult.name,
@@ -87,7 +83,6 @@ router.add("PATCH", "/user", (request, env) =>
 				is_admin: data.is_admin ?? existingUserResult.is_admin,
 			};
 
-			// Update in D1
 			await db
 				.prepare(
 					`UPDATE users SET name = ?, email = ?, password = ?, is_admin = ? WHERE id = ?`,
