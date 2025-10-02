@@ -70,7 +70,6 @@
 </section>
 </div>
 
-<!-- Add User Form -->
 <div class="overlay" id="add-user-overlay">
   <div class="card">
     <h3>Add User</h3>
@@ -100,7 +99,6 @@
   </div>
 </div>
 
-<!-- Edit User Form -->
 <div class="overlay" id="edit-user-overlay">
   <div class="card">
     <h3>Edit User</h3>
@@ -132,7 +130,6 @@
   </div>
 </div>
 
-<!-- Delete Confirmation -->
 <div class="overlay" id="delete-overlay">
   <div class="card">
     <h3>Delete User</h3>
@@ -172,7 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td>${user.name}</td>
         <td>${user.email}</td>
         <td>${user.score || "0"}</td>
-        <td><button class="btn small" onclick="showAnswers(${user.id})">Show</button></td>
+        <td><a class="btn small" href="./userResult.html?id=${user.id}">Show</a></td>
         <td>${user.is_admin ? "✔️" : "❌"}</td>
         <td><button class="icon-btn" onclick='openEditForm(${JSON.stringify(user)})'><i class="fa fa-pen"></i></button></td>
         <td><button class="icon-btn danger" onclick="openDelete(${user.id})"><i class="fa fa-trash"></i></button></td>
@@ -217,7 +214,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
     const payload = { id: data.id, name: data.name, email: data.email, is_admin: data.admin === "true" };
-    // Include password only if it exists
     if (data.password) payload.password = data.password;
     try {
       const res = await fetch("/user", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
