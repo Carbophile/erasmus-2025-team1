@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
+    <title>Home - QuizBattle</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="../leadeboard/css/home.css" rel="stylesheet">
@@ -16,67 +16,131 @@
             <a href="home.html" class="fade-link">Home</a>
             <a href="lista.html" class="fade-link">Leaderboard</a>
         </div>
-        <div class="nav-right">
+        <div class="nav-right" id="auth-area">
             <span class="strelica">→</span>
-            <a href="../login/index.html" class="fade-link">Login</a>
+            <a href="../login/index.html" class="fade-link" id="login-link">Login</a>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="quiz-grid">
-            <div class="quiz-card">
-                Quiz 1
+        <div class="quiz-grid" id="quiz-grid">
+            <div class="quiz-card" data-placeholder="1">Quiz 1
                 <div class="desc">Beginner</div>
             </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
+            <div class="quiz-card locked" data-placeholder="2">
+                <span class="lock">🔒</span>
                 Quiz 2
                 <div class="desc">You need 15 Points to unlock</div>
             </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
+            <div class="quiz-card locked" data-placeholder="3">
+                <span class="lock">🔒</span>
                 Quiz 3
                 <div class="desc">You need 30 Points to unlock</div>
             </div>
-            <div class="quiz-card locked">
-                <span class="lock">&#128274;</span>
+            <div class="quiz-card locked" data-placeholder="4">
+                <span class="lock">🔒</span>
                 Quiz 4
                 <div class="desc">You need 45 Points to unlock</div>
             </div>
         </div>
-        <div class="leaderboard-box">
+        <div class="leaderboard-box" id="lb-box">
             <div class="leaderboard-title">Leaderboard Top 5</div>
-            <div class="leaderboard-list">
-                <div class="leaderboard-item active">Number 1</div>
-                <div class="leaderboard-item">Number 2</div>
-                <div class="leaderboard-item">Number 3</div>
-                <div class="leaderboard-item">Number 4</div>
-                <div class="leaderboard-item">Number 5</div>
-            </div>
-            <div class="show-more">Show More</div>
+            <div class="leaderboard-list" id="leaderboard-list"></div>
+            <div class="show-more" id="show-more">Show More</div>
         </div>
     </div>
 
     <script>
+        const authToken = localStorage.getItem('authToken');
+        const userId = localStorage.getItem('userId');
+        const loginLink = document.getElementById('login-link');
+        const authArea = document.getElementById('auth-area');
 
-        // Glatki fade-out prije prelaska na novu stranicu
+        if (authToken) {
+            const logout = document.createElement('a');
+            logout.textContent = 'Logout';
+            logout.href = '#';
+            logout.className = 'fade-link';
+            logout.addEventListener('click', (e) => { e.preventDefault(); localStorage.clear(); location.reload(); });
+            authArea.innerHTML = '<span class="strelica">→</span>';
+            authArea.appendChild(logout);
+        }
+
+        async function fetchLeaderboard() {
+            try {
+                const r = await fetch('/leaderboard?limit=5');
+                const d = await r.json();
+                const list = document.getElementById('leaderboard-list');
+                list.innerHTML = '';
+                if (d.success) {
+                    d.leaderboard.forEach((u, i) => {
+                        const div = document.createElement('div');
+                        div.className = 'leaderboard-item' + (i === 0 ? ' active' : '');
+                        div.textContent = `${i + 1}. ${u.name || u.email} - ${u.total_score}`;
+                        list.appendChild(div);
+                    });
+                } else { list.innerHTML = '<div class="leaderboard-item">Failed</div>'; }
+            } catch { document.getElementById('leaderboard-list').innerHTML = '<div class="leaderboard-item">Server error</div>'; }
+        }
+
+        async function getUserTotalScore() {
+            if (!userId) return 0;
+            try {
+                const r = await fetch(`/result?user_id=${encodeURIComponent(userId)}`);
+                const d = await r.json();
+                if (Array.isArray(d)) return d.reduce((a, c) => a + (c.score || 0), 0);
+            } catch { }
+            return 0;
+        }
+
+        async function fetchQuizzes() {
+            try {
+                const r = await fetch('/quizzes');
+                const d = await r.json();
+                if (!d.success) return;
+                const total = await getUserTotalScore();
+                const grid = document.getElementById('quiz-grid');
+                const cards = Array.from(grid.querySelectorAll('.quiz-card'));
+                d.quizzes.forEach((q, idx) => {
+                    const card = cards[idx];
+                    if (!card) return;
+                    card.innerHTML = '';
+                    card.classList.remove('locked');
+                    card.dataset.quizId = q.id;
+                    const title = document.createElement('div');
+                    title.textContent = q.name || `Quiz ${idx + 1}`;
+                    const desc = document.createElement('div');
+                    desc.className = 'desc';
+                    desc.textContent = `Need ${q.score_needed || 0} Points`;
+                    card.appendChild(title);
+                    card.appendChild(desc);
+                    const needed = (q.score_needed || 0);
+                    if (needed > total) {
+                        card.classList.add('locked');
+                        if (!card.querySelector('.lock')) { const l = document.createElement('span'); l.className = 'lock'; l.textContent = '🔒'; card.insertBefore(l, card.firstChild); }
+                        desc.textContent = `You need ${needed} Points to unlock`;
+                        card.onclick = null;
+                    } else {
+                        card.onclick = () => { window.location.href = `../questions/questions.html?quiz_id=${q.id}`; };
+                    }
+                });
+            } catch (e) { console.warn('Quizzes fetch failed', e); }
+        }
+
+        document.getElementById('show-more').addEventListener('click', () => { window.location.href = 'lista.html'; });
+
+        // Fade links (existing behavior)
         const links = document.querySelectorAll('.fade-link');
         links.forEach(link => {
             link.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
-                if (!href || href === '#') return; // ignoriraj prazne linkove
-                e.preventDefault(); // spriječi instantni reload
-                document.body.style.opacity = '0'; // fade out
-                setTimeout(() => {
-                    window.location.href = href; // nakon fade-out, promijeni stranicu
-                }, 500); // 500ms, isto kao CSS transition
+                if (!href || href === '#') return;
+                e.preventDefault();
+                document.body.style.opacity = '0';
+                setTimeout(() => { window.location.href = href; }, 500);
             });
         });
-
-        // Fade-in efekt prilikom učitavanja stranice
-        window.addEventListener('DOMContentLoaded', () => {
-            document.body.style.opacity = '1';
-        });
+        window.addEventListener('DOMContentLoaded', () => { document.body.style.opacity = '1'; fetchLeaderboard(); fetchQuizzes(); });
     </script>
 </body>
 

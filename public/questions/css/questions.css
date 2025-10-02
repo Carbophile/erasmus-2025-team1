@@ -1,14 +1,14 @@
 :root {
 	/* Paleta tema */
-	--color-pink: #FF76CE;
-	--color-yellow: #FDFFC2;
-	--color-mint: #94FFD8;
-	--color-blue: #A3D8FF;
+	--color-pink: #ff76ce;
+	--color-yellow: #fdffc2;
+	--color-mint: #94ffd8;
+	--color-blue: #a3d8ff;
 
 	--card-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 
 	/* Gradient pozadina (ostaje ista) */
-	background: linear-gradient(90deg, #FDFFC2, #A3D8FF);
+	background: linear-gradient(90deg, #fdffc2, #a3d8ff);
 	font-family: "Poppins", sans-serif;
 }
 
@@ -206,7 +206,7 @@ button.secondary:hover {
 .result {
 	padding: 20px;
 	border-radius: 14px;
-	background: #A3D8FF;
+	background: #a3d8ff;
 	color: white;
 	text-align: center;
 	margin-top: 20px;
@@ -228,7 +228,6 @@ button.secondary:hover {
 	padding: 15px;
 }
 
-
 .meta-row {
 	display: flex;
 	justify-content: space-between; /* tri elementa ravnomjerno */
@@ -237,7 +236,6 @@ button.secondary:hover {
 	margin-bottom: 20px;
 	width: 100%;
 }
-
 
 .lives {
 	display: flex;
@@ -282,7 +280,6 @@ button.secondary:hover {
 		max-width: 100%;
 	}
 
-
 	.meta-row {
 		display: flex;
 		justify-content: center;
@@ -296,7 +293,7 @@ button.secondary:hover {
 	.lives,
 	.timer,
 	.points {
-		position: static !important;
+		position: static;
 		margin: 0 10px;
 		width: auto;
 		display: inline-flex;
@@ -309,10 +306,9 @@ button.secondary:hover {
 }
 
 @media (max-width: 480px) {
-
 	.timer,
 	.points {
-		position: static !important;
+		position: static;
 		margin: 0 10px;
 		width: auto;
 		display: inline-flex;
@@ -341,12 +337,9 @@ button.secondary:hover {
 		width: 100%;
 	}
 
-
 	.lives {
-		position: static !important;
+		position: static;
 		justify-content: center;
 		margin: 0 10px;
-
 	}
 }
-

@@ -12,7 +12,7 @@ import { getDB } from "./db/db";
 import { Router } from "./router";
 
 const QUIZ_LIVES = 3;
-const QUESTION_TIME = 30; // in seconds
+const QUESTION_TIME = 5; // in seconds (lowered from 30)
 
 async function verifyAdmin(_db, user) {
 	return user?.is_admin;
@@ -293,27 +293,40 @@ router.add("DELETE", "/quiz", (request, env) =>
 	}),
 );
 
-router.add("POST", "/quiz/start", async (_request, env) => {
+router.add("POST", "/quiz/start", async (request, env) => {
 	try {
+		let quiz_id = null;
+		if (request.headers.get("Content-Type")?.includes("application/json")) {
+			try {
+				const body = await request.json();
+				quiz_id = body?.quiz_id ?? null;
+			} catch (_) {}
+		} else {
+			const url = new URL(request.url);
+			quiz_id = url.searchParams.get("quiz_id") || null;
+		}
 		const db = getDB(env);
-		const question = new Question();
-		const randomQuestion = await question.loadRandom(db);
-
+		let randomQuestion = null;
+		if (quiz_id) {
+			const q = new Question();
+			randomQuestion = await q.loadRandomFromQuiz(db, quiz_id);
+		} else {
+			const q = new Question();
+			randomQuestion = await q.loadRandom(db);
+		}
 		if (!randomQuestion) {
 			return new Response(
-				JSON.stringify({ success: false, error: "No questions available" }),
-				{
-					headers: { "Content-Type": "application/json" },
-					status: 500,
-				},
+				JSON.stringify({
+					success: false,
+					error: "No questions available for this quiz",
+				}),
+				{ status: 404, headers: { "Content-Type": "application/json" } },
 			);
 		}
-
-		// Load options for the question
 		const option = new Option();
 		const options = await option.loadFromQuestion(db, randomQuestion.id);
-
 		const state = {
+			quiz_id: randomQuestion.quiz_id || quiz_id || null,
 			lives: QUIZ_LIVES,
 			score: 0,
 			question_id: randomQuestion.id,
@@ -321,18 +334,16 @@ router.add("POST", "/quiz/start", async (_request, env) => {
 			question_start_time: Date.now(),
 			history: [],
 		};
-
 		const signedState = await sign(state, env.QUIZ_SECRET);
-
 		return new Response(
 			JSON.stringify({
 				success: true,
 				question: { ...randomQuestion, options },
 				state: signedState,
+				lives: state.lives,
+				score: state.score,
 			}),
-			{
-				headers: { "Content-Type": "application/json" },
-			},
+			{ headers: { "Content-Type": "application/json" } },
 		);
 	} catch (e) {
 		return new Response(`Error: ${e.message}`, { status: 500 });
@@ -343,103 +354,107 @@ router.add("POST", "/quiz/answer", async (request, env) => {
 	try {
 		const db = getDB(env);
 		const { state: signedState, answer } = await request.json();
-
 		const state = await verify(signedState, env.QUIZ_SECRET);
-
-		if (!state) {
+		if (!state)
 			return new Response(
 				JSON.stringify({ success: false, error: "Invalid state" }),
-				{
-					headers: { "Content-Type": "application/json" },
-					status: 400,
-				},
+				{ status: 400, headers: { "Content-Type": "application/json" } },
 			);
-		}
-
 		const {
 			question_id,
 			question_start_time,
-			score,
 			history,
 			question_difficulty,
+			quiz_id,
 		} = state;
-
+		let last_correct = false;
+		let correct_option_id = null;
+		let timeout = false;
+		const option = new Option();
+		const options = await option.loadFromQuestion(db, question_id);
+		const correctOption = options.find((o) => o.correct);
+		if (correctOption) correct_option_id = correctOption.id;
 		if (Date.now() - question_start_time > QUESTION_TIME * 1000) {
+			timeout = true;
 			state.lives -= 1;
-			if (state.lives <= 0) {
-				return new Response(
-					JSON.stringify({
-						success: true,
-						game_over: true,
-						final_score: score,
-					}),
-					{
-						headers: { "Content-Type": "application/json" },
-					},
-				);
-			}
 		} else {
-			// Load the correct option for this question
-			const option = new Option();
-			const options = await option.loadFromQuestion(db, question_id);
-			const correctOption = options.find((opt) => opt.correct);
-
-			if (correctOption && correctOption.id.toString() === answer.toString()) {
+			if (
+				correctOption &&
+				correctOption.id.toString() === (answer ?? "").toString()
+			) {
 				state.score += 1 * question_difficulty;
+				last_correct = true;
 			} else {
 				state.lives -= 1;
 			}
 		}
-
 		if (state.lives <= 0) {
 			return new Response(
 				JSON.stringify({
 					success: true,
 					game_over: true,
-					final_score: state.score,
+					final_score: 0,
+					lives: 0,
+					reason: "no_lives",
+					last: {
+						correct: last_correct,
+						correct_option_id,
+						answer_given: answer ?? null,
+						timeout,
+					},
 				}),
-				{
-					headers: { "Content-Type": "application/json" },
-				},
+				{ headers: { "Content-Type": "application/json" } },
 			);
 		}
-
-		const newQuestion = new Question();
-		const randomQuestion = await newQuestion.loadRandom(db, history);
-
-		if (!randomQuestion) {
+		// Add current question to history BEFORE fetching next to avoid repetition
+		if (!state.history.includes(question_id)) state.history.push(question_id);
+		let nextQuestion = null;
+		if (quiz_id) {
+			const q = new Question();
+			nextQuestion = await q.loadRandomFromQuiz(db, quiz_id, state.history);
+		} else {
+			const q = new Question();
+			nextQuestion = await q.loadRandom(db, state.history);
+		}
+		if (!nextQuestion) {
 			return new Response(
 				JSON.stringify({
 					success: true,
 					game_over: true,
 					final_score: state.score,
+					lives: state.lives,
+					reason: "completed",
+					last: {
+						correct: last_correct,
+						correct_option_id,
+						answer_given: answer ?? null,
+						timeout,
+					},
 				}),
-				{
-					headers: { "Content-Type": "application/json" },
-				},
+				{ headers: { "Content-Type": "application/json" } },
 			);
 		}
-
-		// Load options for the new question
-		const option = new Option();
-		const newOptions = await option.loadFromQuestion(db, randomQuestion.id);
-
-		state.history.push(question_id);
-		state.question_id = randomQuestion.id;
-		state.question_difficulty = randomQuestion.difficulty;
+		const option2 = new Option();
+		const newOptions = await option2.loadFromQuestion(db, nextQuestion.id);
+		state.question_id = nextQuestion.id;
+		state.question_difficulty = nextQuestion.difficulty;
 		state.question_start_time = Date.now();
-
 		const newSignedState = await sign(state, env.QUIZ_SECRET);
-
 		return new Response(
 			JSON.stringify({
 				success: true,
-				question: { ...randomQuestion, options: newOptions },
+				question: { ...nextQuestion, options: newOptions },
 				state: newSignedState,
+				lives: state.lives,
+				score: state.score,
+				last: {
+					correct: last_correct,
+					correct_option_id,
+					answer_given: answer ?? null,
+					timeout,
+				},
 			}),
-			{
-				headers: { "Content-Type": "application/json" },
-			},
+			{ headers: { "Content-Type": "application/json" } },
 		);
 	} catch (e) {
 		return new Response(`Error: ${e.message}`, { status: 500 });

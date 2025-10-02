@@ -14,56 +14,80 @@
       <a href="home.html" class="fade-link">Home</a>
       <a href="../profil/profil.html" id="profile-link" class="fade-link">Profile</a>
     </div>
-    <div class="nav-right">
+    <div class="nav-right" id="auth-area">
       <span class="strelica">→</span>
-      <a href="../login/index.html" class="fade-link">Login</a>
+      <a href="../login/index.html" class="fade-link" id="login-link">Login</a>
     </div>
   </div>
-  <div class="leaderboard">
-    <h2>Leaderboard Top 5</h2>
-
-    <div class="entry first">
-      <span class="rank">1</span>
-      <span class="name">Ime1</span>
-      <span class="score">100</span>
-    </div>
-
-    <div class="entry other">
-      <span class="rank">2</span>
-      <span class="name">Ime2</span>
-      <span class="score">90</span>
-    </div>
-
-    <div class="entry other">
-      <span class="rank">3</span>
-      <span class="name">Ime3</span>
-      <span class="score">80</span>
-    </div>
-
-    <div class="entry other">
-      <span class="rank">4</span>
-      <span class="name">Ime4</span>
-      <span class="score">70</span>
-    </div>
-
-    <div class="entry other">
-      <span class="rank">5</span>
-      <span class="name">Ime5</span>
-      <span class="score">60</span>
-    </div>
-
-    <button class="show-more">Show More</button>
+  <div class="leaderboard" id="leaderboard-root">
+    <h2>Leaderboard -QuizBattle</h2>
+    <div id="entries"></div>
+    <button class="show-more" id="toggle-full" style="display:none;">Show More</button>
   </div>
 </body>
 <script>
-  const isLoggedIn = localStorage.getItem("loggedIn");
+  const authToken = localStorage.getItem('authToken');
+  const profileLink = document.getElementById('profile-link');
+  const authArea = document.getElementById('auth-area');
+  if (authToken) {
+    const logout = document.createElement('a');
+    logout.href = '#';
+    logout.textContent = 'Logout';
+    logout.className = 'fade-link';
+    logout.addEventListener('click', e => { e.preventDefault(); localStorage.clear(); location.reload(); });
+    authArea.innerHTML = '<span class="strelica">→</span>';
+    authArea.appendChild(logout);
+  }
 
-  document.getElementById("profile-link").addEventListener("click", function (event) {
-    if (!isLoggedIn) {
-      event.preventDefault(); n
-      window.location.href = "../login.html"; 
-    }
+  profileLink.addEventListener('click', function (event) {
+    if (!authToken) { event.preventDefault(); window.location.href = '../login/index.html'; }
   });
+
+  let fullData = []; // cache full leaderboard
+  let showingAll = false;
+
+  function renderLeaderboard(limit = null) {
+    const entriesDiv = document.getElementById('entries');
+    entriesDiv.innerHTML = '';
+    const data = (limit && fullData.length > limit) ? fullData.slice(0, limit) : fullData;
+    data.forEach((u, i) => {
+      const div = document.createElement('div');
+      div.className = 'entry ' + (i === 0 ? 'first' : 'other');
+      div.innerHTML = `<span class='rank'>${i + 1}</span><span class='name'>${u.name || u.email}</span><span class='score'>${u.total_score}</span>`;
+      entriesDiv.appendChild(div);
+    });
+    const toggleBtn = document.getElementById('toggle-full');
+    if (fullData.length <= 5) {
+      toggleBtn.style.display = 'none';
+    } else {
+      toggleBtn.style.display = 'block';
+      toggleBtn.textContent = showingAll ? 'Show Less' : 'Show More';
+    }
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const r = await fetch('/leaderboard');
+      const d = await r.json();
+      if (d.success) {
+        fullData = d.leaderboard || [];
+        showingAll = false;
+        renderLeaderboard(5);
+      } else {
+        document.getElementById('entries').innerHTML = '<div class="entry other">Failed to load</div>';
+      }
+    } catch {
+      document.getElementById('entries').innerHTML = '<div class="entry other">Server error</div>';
+    }
+  }
+
+  document.getElementById('toggle-full').addEventListener('click', () => {
+    if (!fullData.length) return;
+    showingAll = !showingAll;
+    if (showingAll) renderLeaderboard(); else renderLeaderboard(5);
+  });
+
+  loadLeaderboard();
 </script>
 
 </html>

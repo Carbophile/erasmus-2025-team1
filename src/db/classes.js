@@ -286,6 +286,23 @@ export class Question {
 		return null;
 	}
 
+	async loadRandomFromQuiz(db, quiz_id, excludeIds = []) {
+		let sql = `SELECT * FROM questions WHERE quiz_id = ?`;
+		const params = [quiz_id];
+		if (excludeIds.length) {
+			const placeholders = excludeIds.map(() => "?").join(",");
+			sql += ` AND id NOT IN (${placeholders})`;
+			params.push(...excludeIds);
+		}
+		sql += ` ORDER BY RANDOM() LIMIT 1`;
+		const result = await queryDB(db, sql, params);
+		if (result?.results && result.results.length > 0) {
+			Object.assign(this, result.results[0]);
+			return result.results[0];
+		}
+		return null;
+	}
+
 	async create(db) {
 		const now = new Date().toISOString();
 		const sql = `INSERT INTO questions (category_id, quiz_id, text, country, difficulty, score_multiplier, create_date, update_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
