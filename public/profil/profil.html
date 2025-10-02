@@ -4,13 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>User Profile</title>
+  <title>User Profile - QuizBattle</title>
   <link rel="stylesheet" href="../profil/css/profile.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-
   <header>
     <div class="menu-container">
       <div class="menu-icon">☰</div>
@@ -19,42 +18,83 @@
         <a href="../leadeboard/lista.html">Leaderboard</a>
       </div>
     </div>
-
-    <div class="user-info">
-      <span>Welcome J. Doe</span>
-      <div class="profile-icon">👤</div>
-    </div>
-     <a href="../login/index.html" class="logout">Logout ⤴</a>
+    <div class="user-info" id="user-info"><span>Welcome</span><div class="profile-icon">👤</div></div>
+    <a href="../login/index.html" class="logout" id="logout-link">Logout ⤴</a>
   </header>
-
-
   <main>
     <section class="profile-section">
       <div class="avatar"><img src="../profil/img/icons8-account-male-94.png"></div>
       <div class="info">
-        <div class="points">Points: <strong>10</strong></div>
-        <div class="progress-bar">
-          <div class="fill"></div>
-        </div>
-        <p class="join-date">Joined on: 25-09-2025</p>
+        <div class="points">Points: <strong id="points-val">0</strong></div>
+        <div class="progress-bar"><div class="fill" id="progress-fill"></div></div>
+        <p class="join-date" id="join-date">Joined on: -</p>
       </div>
     </section>
-
     <section class="cards">
-      <div class="card a">Quiz 1 - Finished</div>
-
-      <div class="card wide stats">
-        <p>🏆 Total Wins</p>
-        <p>📈 Total Challenge</p>
-        <p>🎖️ Runner up</p>
+      <div class="card a" id="quiz-status">Quiz progress</div>
+      <div class="card wide stats" id="stats-card">
+        <p id="stat-wins">🏆 Total Wins: 0</p>
+        <p id="stat-played">📈 Total Played: 0</p>
+        <p id="stat-rank">🎖️ Best Rank: -</p>
+        <p id="stat-high">🔥 Highest Score: 0</p>
+        <p id="stat-avg">🧮 Average Score: 0</p>
       </div>
     </section>
   </main>
+  <footer></footer>
+<script>
+  const token = localStorage.getItem('authToken');
+  const userId = localStorage.getItem('userId');
+  if (!token || !userId) { window.location.href='../login/index.html'; }
 
-  <footer>
-   
-  </footer>
+  document.getElementById('logout-link').addEventListener('click', (e)=> { e.preventDefault(); localStorage.clear(); window.location.href='../login/index.html'; });
 
+  async function fetchUser() {
+    try { const r = await fetch(`/user?id=${userId}`); if (!r.ok) return null; return await r.json(); } catch { return null; }
+  }
+  async function fetchResults() {
+    try { const r = await fetch(`/result?user_id=${userId}`); if (!r.ok) return []; return await r.json(); } catch { return []; }
+  }
+  async function fetchQuizzes() {
+    try { const r = await fetch('/quizzes'); const d = await r.json(); return d.success ? d.quizzes : []; } catch { return []; }
+  }
+  async function fetchFullLeaderboard() {
+    try { const r = await fetch('/leaderboard'); const d = await r.json(); return d.success ? d.leaderboard : []; } catch { return []; }
+  }
+  function formatDate(iso) { if(!iso) return '-'; const d=new Date(iso); const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); const yy=d.getFullYear(); return `${dd}-${mm}-${yy}`; }
+
+  (async function init(){
+    const [user, results, quizzes, leaderboard] = await Promise.all([fetchUser(), fetchResults(), fetchQuizzes(), fetchFullLeaderboard()]);
+    const quizMap = new Map(quizzes.map(q => [q.id, q]));
+    const total = results.reduce((a,c)=> a + (c.score||0), 0);
+    document.getElementById('points-val').textContent = total;
+    document.getElementById('user-info').querySelector('span').textContent = `Welcome ${user?.name || user?.email || ''}`;
+    document.getElementById('join-date').textContent = `Joined on: ${formatDate(user?.create_date)}`;
+
+    // Wins: result score >= related quiz.score_needed (if quiz exists) else score>0
+    let wins = 0; let highest = 0; let sum = 0; let played = results.length;
+    results.forEach(r => { highest = Math.max(highest, r.score||0); sum += (r.score||0); const quizNeeded = quizMap.get(r.quiz_id)?.score_needed ?? 0; if ((r.score||0) >= quizNeeded && (r.score||0) > 0) wins++; });
+    const avg = played ? (sum / played).toFixed(1) : 0;
+
+    // Rank: find index in leaderboard
+    let rank = '-';
+    if (leaderboard.length) {
+      const idx = leaderboard.findIndex(entry => entry.id == userId);
+      if (idx !== -1) rank = idx + 1;
+    }
+
+    document.getElementById('quiz-status').textContent = `Quizzes Played: ${played}`;
+    document.getElementById('stat-wins').textContent = `🏆 Total Wins: ${wins}`;
+    document.getElementById('stat-played').textContent = `📈 Total Played: ${played}`;
+    document.getElementById('stat-rank').textContent = `🎖️ Best Rank: ${rank}`;
+    document.getElementById('stat-high').textContent = `🔥 Highest Score: ${highest}`;
+    document.getElementById('stat-avg').textContent = `🧮 Average Score: ${avg}`;
+
+    const maxReference = 100; // scaling base
+    const pct = Math.min(100, Math.round((total / maxReference) * 100));
+    document.getElementById('progress-fill').style.width = pct + '%';
+  })();
+</script>
 </body>
 
 </html>

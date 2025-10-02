@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Jednostavan Kviz - Konstruktor</title>
+    <title>Quiz - QuizBattle</title>
     <link href="../questions/css/questions.css" rel="stylesheet" />
     <style>
         .fade-out {
@@ -23,6 +23,31 @@
             align-items: center;
             text-align: center;
         }
+
+        .answer.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .answer.correct {
+            background: #2e8b57 !important;
+            color: #fff;
+        }
+
+        .answer.incorrect {
+            background: #b22222 !important;
+            color: #fff;
+        }
+
+        .answer.show-correct {
+            outline: 2px solid #2e8b57;
+        }
+
+        .feedback-banner {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -35,7 +60,7 @@
                 <span class="heart">❤️</span>
                 <span class="heart">❤️</span>
             </div>
-            <div class="timer" id="timer">00:30</div>
+            <div class="timer" id="timer">00:05</div>
             <div class="points" id="points">Score: 0</div>
         </div>
         <div class="card-content">
@@ -48,313 +73,213 @@
     </div>
 
     <script>
-        class Quiz {
-            constructor(container, questions = [], opts = {}) {
-                this.container = container;
-                this.questions = questions;
-                this.index = 0;
-                this.score = 0;
-                this.lives = 3;
-                this.userAnswers = new Array(questions.length).fill(null);
-                this.showCorrectOnSubmit = opts.showCorrectOnSubmit ?? true;
-                this.livesContainer = document.getElementById('lives');
-                this.render();
-            }
+        // Backend-integrated quiz (all life/score correctness server-side)
+        const API = {
+            start: (quiz_id) => fetch('/quiz/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quiz_id })
+            }).then(r => r.json()),
+            answer: (state, answer) => fetch('/quiz/answer', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state, answer })
+            }).then(r => r.json()),
+            saveResult: (token, quiz_id, score, time_taken) => fetch('/quiz/result', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ quiz_id, score, time_taken })
+            }).then(r => r.json())
+        };
 
-            render() {
-                this.container.innerHTML = `
-          <div class="meta-block">
-            <div class="progress" id="progress"></div>
-            <div class="question-block">
-              <div class="question" id="question"></div>
-            </div>
-          </div>
-          <div class="answers" id="answers"></div>
-          <div class="controls">
-            <div>
-              <button id="prevBtn" class="secondary">Previous</button>
-              <button id="nextBtn">Next</button>
-            </div>
-            <div class="progress" id="scoreDisplay"></div>
-          </div>
-          <div id="resultArea"></div>
-        `;
+        const livesContainer = document.getElementById('lives');
+        const timerElement = document.getElementById('timer');
+        const pointsElement = document.getElementById('points');
+        const root = document.getElementById('quiz-root');
+        const imageEl = document.getElementById('question-image');
 
-                this.$question = this.container.querySelector('#question');
-                this.$answers = this.container.querySelector('#answers');
-                this.$progress = this.container.querySelector('#progress');
-                this.$scoreDisplay = this.container.querySelector('#scoreDisplay');
-                this.$prevBtn = this.container.querySelector('#prevBtn');
-                this.$nextBtn = this.container.querySelector('#nextBtn');
-                this.$resultArea = this.container.querySelector('#resultArea');
-                this.timerDuration = 30;
-                this.timer = null;
-                this.timerElement = document.getElementById('timer');
-                this.$points = document.getElementById('points');
+        let signedState = null;
+        let currentQuestion = null;
+        let lives = 3;
+        let score = 0;
+        let quizStartTime = Date.now();
+        let timerInterval = null;
+        const QUESTION_TIME = 5; // seconds UI (authoritative server-side)
+        let firstQuizId = null;
+        let pendingNext = false;
+        let lastFeedback = null;
 
-                this.$prevBtn.onclick = () => this.prev();
-                this.$nextBtn.onclick = () => this.next();
+        function updateLivesDisplay() {
+            const hearts = livesContainer.querySelectorAll('.heart');
+            hearts.forEach((h, i) => {
+                if (i >= lives) { h.classList.add('lost'); h.textContent = '💔'; }
+                else { h.classList.remove('lost'); h.textContent = '❤️'; }
+            });
+        }
 
-
-                window.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowRight') this.next();
-                    if (e.key === 'ArrowLeft') this.prev();
-                });
-
-                this.showQuestion();
-            }
-
-            startTimer() {
-                clearInterval(this.timer);
-                let timeLeft = this.timerDuration;
-                this.updateTimerDisplay(timeLeft);
-
-                this.timer = setInterval(() => {
-                    timeLeft--;
-                    this.updateTimerDisplay(timeLeft);
-
-                    if (timeLeft <= 0) {
-                        clearInterval(this.timer);
-                        // fade-out animacija kad timer istekne
-                        const questionBlock = this.container.querySelector('.question-block');
-                        const answersBlock = this.container.querySelector('.answers');
-                        if (questionBlock) questionBlock.classList.remove('fade-in');
-                        if (answersBlock) answersBlock.classList.remove('fade-in');
-                        if (questionBlock) questionBlock.classList.add('fade-out');
-                        if (answersBlock) answersBlock.classList.add('fade-out');
-                        setTimeout(() => {
-                            this.loseLife();
-                            this.next();
-                        }, 300);
-                    }
-                }, 1000);
-            }
-
-            updateTimerDisplay(seconds) {
-                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-                const secs = String(seconds % 60).padStart(2, '0');
-                this.timerElement.textContent = `${mins}:${secs}`;
-            }
-
-            showQuestion() {
-                // Animacija fade-in
-                const questionBlock = this.container.querySelector('.question-block');
-                const answersBlock = this.container.querySelector('.answers');
-                if (questionBlock) questionBlock.classList.remove('fade-out');
-                if (answersBlock) answersBlock.classList.remove('fade-out');
-                if (questionBlock) questionBlock.classList.add('fade-in');
-                if (answersBlock) answersBlock.classList.add('fade-in');
-
-                const q = this.questions[this.index];
-                this.$question.textContent = `${this.index + 1}. ${q.text}`;
-                this.$answers.innerHTML = '';
-                q.choices.forEach((c, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'answer';
-                    div.tabIndex = 0;
-                    div.textContent = c;
-                    div.addEventListener('click', () => this.select(i));
-                    div.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.select(i) });
-
-                    if (this.userAnswers[this.index] === i) div.classList.add('selected');
-
-                    this.$answers.appendChild(div);
-                });
-
-                const imgEl = document.getElementById('question-image');
-                if (q.image) {
-                    imgEl.src = q.image;
-                    imgEl.style.display = 'block';
-                } else {
-                    imgEl.src = '';
-                    imgEl.style.display = 'none';
+        function setTimer(seconds) {
+            clearInterval(timerInterval);
+            let remaining = seconds;
+            renderTimer(remaining);
+            timerInterval = setInterval(() => {
+                remaining--;
+                renderTimer(remaining);
+                if (remaining < 0) { // timeout -> send null answer
+                    clearInterval(timerInterval);
+                    lockAnswers();
+                    sendAnswer(null); // server will deduct life and either continue or end
                 }
+            }, 1000);
+        }
 
-                this.updateMeta();
-                this.updateButtons();
-                this.$resultArea.innerHTML = '';
-                this.startTimer();
-            }
+        function renderTimer(sec) {
+            if (sec < 0) sec = 0;
+            const mins = String(Math.floor(sec / 60)).padStart(2, '0');
+            const secs = String(sec % 60).padStart(2, '0');
+            timerElement.textContent = `${mins}:${secs}`;
+        }
 
-            select(choiceIndex) {
-                if (this.userAnswers[this.index] !== null) return;
-
-                this.userAnswers[this.index] = choiceIndex;
-                Array.from(this.$answers.children).forEach((el, i) => {
-                    el.classList.toggle('selected', i === choiceIndex);
-                });
-
-                const currentQuestion = this.questions[this.index];
-                if (choiceIndex !== currentQuestion.answerIndex) {
-                    this.loseLife();
-                }
-
-                this.calculateScore();
-
-                setTimeout(() => {
-                    this.next();
-                }, 1000);
-            }
-
-            loseLife() {
-                if (this.lives > 0) {
-                    this.lives--;
-                    this.updateLivesDisplay();
-
-                    if (this.lives === 0) {
-                        this.gameOver();
-                        return;
-                    }
-                }
-            }
-
-            updateLivesDisplay() {
-                const hearts = this.livesContainer.querySelectorAll('.heart');
-                hearts.forEach((heart, index) => {
-                    if (index >= this.lives) {
-                        heart.classList.add('lost');
-                        heart.textContent = '💔';
-                    }
-                });
-            }
-
-            calculateScore() {
-                let correct = 0;
-                this.questions.forEach((q, i) => {
-                    if (this.userAnswers[i] === q.answerIndex) correct++;
-                });
-                this.score = correct;
-                this.$points.textContent = `Score: ${this.score}`;
-            }
-
-            next() {
-                if (this.lives === 0) return;
-                const questionBlock = this.container.querySelector('.question-block');
-                const answersBlock = this.container.querySelector('.answers');
-                if (questionBlock) questionBlock.classList.remove('fade-in');
-                if (answersBlock) answersBlock.classList.remove('fade-in');
-                if (questionBlock) questionBlock.classList.add('fade-out');
-                if (answersBlock) answersBlock.classList.add('fade-out');
-
-                setTimeout(() => {
-                    if (this.index < this.questions.length - 1) {
-                        this.index++;
-                        this.showQuestion();
-                    } else {
-                        this.finish();
-                    }
-                }, 300);
-            }
-
-            prev() {
-                if (this.index > 0) {
-                    this.index--;
-                    this.showQuestion();
-                }
-            }
-
-            updateMeta() {
-                this.$progress.textContent = `Question ${this.index + 1} of ${this.questions.length}`;
-                this.$scoreDisplay.textContent = `Answered: ${this.userAnswers.filter(a => a !== null).length}/${this.questions.length}`;
-                this.$points.textContent = `Score: ${this.score}`;
-            }
-
-            updateButtons() {
-                this.$prevBtn.disabled = this.index === 0;
-                this.$nextBtn.textContent = (this.index === this.questions.length - 1) ? 'Finish' : 'Next';
-
-                if (this.lives === 0) {
-                    this.$prevBtn.disabled = true;
-                    this.$nextBtn.disabled = true;
-                }
-            }
-
-            gameOver() {
-                clearInterval(this.timer);
-                this.$resultArea.innerHTML = `
-                    <div class="result game-over">
-                        <strong>Game Over!</strong><br>
-                        You ran out of lives.<br>
-                        Final Score: ${this.score} / ${this.questions.length}
+        function renderQuestion(q) {
+            root.innerHTML = `
+                <div class="meta-block">
+                    <div class="progress" id="progress">Difficulty: ${q.difficulty || ''}</div>
+                    <div class="question-block">
+                        <div class="question" id="question">${q.text}</div>
                     </div>
-                `;
-                this.timerElement.textContent = '00:00';
+                </div>
+                <div class="answers" id="answers"></div>
+                <div id="resultArea"></div>
+            `;
+            const answersDiv = root.querySelector('#answers');
+            (q.options || []).forEach(opt => {
+                const div = document.createElement('div');
+                div.className = 'answer fade-in';
+                div.textContent = opt.option;
+                div.dataset.optionId = opt.id;
+                div.addEventListener('click', () => selectAnswer(opt.id, div));
+                answersDiv.appendChild(div);
+            });
+            if (q.image) { imageEl.src = q.image; imageEl.style.display = 'block'; } else { imageEl.style.display = 'none'; }
+            if (!firstQuizId) firstQuizId = q.quiz_id; // remember first quiz id for result association
+            setTimer(QUESTION_TIME);
+            lastFeedback = null;
+            pendingNext = false;
+        }
 
-                Array.from(this.$answers.children).forEach(el => {
-                    el.style.pointerEvents = 'none';
-                    el.style.opacity = '0.5';
-                });
+        function lockAnswers() {
+            const answers = root.querySelectorAll('.answer');
+            answers.forEach(a => a.classList.add('disabled'));
+        }
+
+        function selectAnswer(id, el) {
+            lockAnswers();
+            el.classList.add('selected');
+            clearInterval(timerInterval);
+            sendAnswer(id);
+        }
+
+        async function sendAnswer(answerId) {
+            if (!signedState) return;
+            try {
+                const res = await API.answer(signedState, answerId);
+                if (!res.success) throw new Error(res.error || 'Answer failed');
+                lastFeedback = res.last || null;
+                applyAnswerFeedback(lastFeedback);
+                if (res.game_over) {
+                    lives = res.lives ?? 0;
+                    score = res.final_score ?? 0;
+                    updateLivesDisplay();
+                    // delay a moment to show feedback
+                    setTimeout(() => showGameOver(res), 800);
+                    return;
+                }
+                signedState = res.state;
+                lives = res.lives;
+                score = res.score;
+                updateLivesDisplay();
+                pointsElement.textContent = `Score: ${score}`;
+                currentQuestion = res.question;
+                // wait before moving to next question so user sees feedback
+                if (!pendingNext) {
+                    pendingNext = true;
+                    setTimeout(() => renderQuestion(currentQuestion), 800);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Network / server error answering question.');
             }
+        }
 
-            finish() {
-                clearInterval(this.timer);
-                this.calculateScore();
-                const percentage = Math.round((this.score / this.questions.length) * 100);
-                let message = '';
-                let resultClass = '';
+        function applyAnswerFeedback(feedback) {
+            if (!feedback) return;
+            const answersDiv = root.querySelector('#answers');
+            if (!answersDiv) return;
+            const given = feedback.answer_given;
+            const correctId = feedback.correct_option_id;
+            const children = Array.from(answersDiv.children);
+            children.forEach(ch => {
+                const oid = ch.dataset.optionId;
+                if (oid == correctId) ch.classList.add('correct');
+                if (given != null && oid == given && given != correctId) ch.classList.add('incorrect');
+                if (oid == correctId && given != correctId) ch.classList.add('show-correct');
+            });
+            const fb = document.createElement('div');
+            fb.className = 'feedback-banner';
+            if (feedback.timeout) fb.textContent = 'Time ran out! Correct answer shown.';
+            else if (feedback.correct) fb.textContent = 'Correct!';
+            else fb.textContent = 'Incorrect! Correct answer highlighted.';
+            root.querySelector('#resultArea')?.appendChild(fb);
+        }
 
-                // Sakrij pitanje, odgovore i sliku
-                const questionBlock = this.container.querySelector('.question-block');
-                const answersBlock = this.container.querySelector('.answers');
-                const imageContainer = document.querySelector('.image-container');
-                if (questionBlock) questionBlock.style.display = 'none';
-                if (answersBlock) answersBlock.style.display = 'none';
-                if (imageContainer) imageContainer.style.display = 'none';
+        function showGameOver(res) {
+            // apply last feedback if not yet applied
+            applyAnswerFeedback(lastFeedback);
+            clearInterval(timerInterval);
+            timerElement.textContent = '00:00';
+            const reason = res.reason;
+            const finalScoreText = reason === 'no_lives' ? 'Score discarded (no lives left)' : `Final Score: ${score}`;
+            root.innerHTML = `
+                <div class="result game-over finish-center fade-in">
+                    <strong>${reason === 'no_lives' ? 'Game Over!' : 'Quiz Finished!'}</strong><br>
+                    ${finalScoreText}<br>
+                    <div style="margin-top:1rem;">Lives remaining: ${lives}</div>
+                    <a id="goHomeLink" href="../leadeboard/home.html" style="margin-top:30px; padding:12px 32px; border-radius:10px; background:#FF76CE; color:#fff; font-size:1.1rem; border:none; cursor:pointer; text-decoration:none; display:inline-block;">Go to Home</a>
+                </div>`;
+            const link = document.getElementById('goHomeLink');
+            if (link) link.addEventListener('click', e => { e.preventDefault(); document.body.style.opacity = '0'; setTimeout(() => location.href = link.getAttribute('href'), 300); });
 
-                this.$resultArea.innerHTML = `
-                    <div class="result ${resultClass} fade-in finish-center">
-                        <div style="font-size:2rem; font-weight:bold; margin-bottom:10px;"> Quiz Finished! </div>
-                        <div style="font-size:1.3rem; margin-bottom:10px;">
-                            Final Score: <span style="color:#fff;">${this.score}</span> / ${this.questions.length} (${percentage}%)
-                        </div>
-                        <div style="font-size:1.1rem;">
-                            Lives remaining: <span style="color:#fff;">${this.lives}</span>
-                        </div>
-                        <a id="goHomeLink" href="../leadeboard/home.html" style="margin-top:30px; padding:12px 32px; border-radius:10px; background:#FF76CE; color:#fff; font-size:1.1rem; border:none; cursor:pointer; text-decoration:none; display:inline-block;">Go to Home</a>
-                    </div>
-                `;
-                this.timerElement.textContent = '00:00';
-
-                // Fade-out efekt na link klik
-                const link = document.getElementById('goHomeLink');
-                if (link) {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        document.body.style.opacity = '0';
-                        setTimeout(() => {
-                            window.location.href = link.getAttribute('href');
-                        }, 300);
-                    });
+            if (reason !== 'no_lives') {
+                const token = localStorage.getItem('authToken');
+                if (token && firstQuizId) {
+                    API.saveResult(token, firstQuizId, score, Math.round((Date.now() - quizStartTime) / 1000)).then(r => {
+                        if (!r?.success) console.warn('Result save failed');
+                    }).catch(() => { });
                 }
             }
         }
 
-        const sampleQuestions = [
-            {
-                id: 1,
-                text: 'In which country is Zwolle located?',
-                choices: ['Germany', 'Belgium', 'Netherlands', 'France'],
-                answerIndex: 2,
-                image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Map_Netherlands_Zwolle.png/320px-Map_Netherlands_Zwolle.png'
-            },
-            {
-                id: 2,
-                text: 'In which country is Split located?',
-                choices: ['Italy', 'Croatia', 'Slovenia', 'Greece'],
-                answerIndex: 1,
-                image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Split_%28Orthophoto%29.png/320px-Split_%28Orthophoto%29.png'
-            },
-            {
-                id: 3,
-                text: 'Which sport is most popular in Zwolle?',
-                choices: ['Football', 'Basketball', 'Ice hockey', 'Rugby'],
-                answerIndex: 0,
-                image: ''
+        async function startQuiz() {
+            try {
+                const quiz_id = new URLSearchParams(location.search).get('quiz_id');
+                const res = await API.start(quiz_id);
+                if (!res.success) {
+                    root.innerHTML = `<div class="result game-over">${res.error || 'Failed to start quiz.'}</div>`;
+                    return;
+                }
+                signedState = res.state;
+                lives = res.lives;
+                score = res.score;
+                quizStartTime = Date.now();
+                pointsElement.textContent = `Score: ${score}`;
+                updateLivesDisplay();
+                currentQuestion = res.question;
+                renderQuestion(currentQuestion);
+            } catch (e) {
+                console.error(e);
+                root.innerHTML = '<div class="result game-over">Server not reachable.</div>';
             }
-        ];
+        }
 
-        const root = document.getElementById('quiz-root');
-        new Quiz(root, sampleQuestions, { showCorrectOnSubmit: true });
+        // Kick off
+        startQuiz();
     </script>
 </body>
 
