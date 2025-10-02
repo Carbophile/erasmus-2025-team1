@@ -66,7 +66,7 @@ router.add("PATCH", "/user", (request, env) =>
 			const existingUserResult = await db
 				.prepare("SELECT * FROM users WHERE id = ?")
 				.bind(data.id)
-				.first(); 
+				.first();
 
 			if (!existingUserResult)
 				return new Response("User not found", { status: 404 });

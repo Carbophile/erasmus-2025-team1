@@ -103,7 +103,6 @@ let deleteTarget = null;
 
 async function fetchQuizzes() {
   try {
-    // Fetch all quizzes
     const res = await fetch("/quizzes", {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
     });
@@ -112,20 +111,17 @@ async function fetchQuizzes() {
     
     allQuizzes = data.quizzes;
 
-    // Fetch counts for all quizzes in one request
     const countRes = await fetch("/quiz/question/count", {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
     });
     const countData = await countRes.json();
     if (!countData.success || !Array.isArray(countData.quizzes)) throw new Error("Failed to load quiz counts");
 
-    // Build a map of counts by quiz id
     const countMap = {};
     countData.quizzes.forEach(q => {
       countMap[q.id] = q.question_count || 0;
     });
 
-    // Add question_count to each quiz
     allQuizzes = allQuizzes.map(q => ({ ...q, question_count: countMap[q.id] || 0 }));
 
     renderTable();

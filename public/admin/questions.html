@@ -389,14 +389,12 @@
 
 			form.addEventListener("submit", async (e) => {
 				e.preventDefault();
-				errorBox.textContent = ""; // clear old errors
+				errorBox.textContent = ""; 
 				const fd = Object.fromEntries(new FormData(form).entries());
 				const questionText = fd.question.trim();
 				const quizId = Number(fd.quizId);
 				const category_id = Number(fd.category) || null;
 				const country = Number(fd.country || 0);
-
-				// Parse options and correct answers
 				const optionsArray = fd.options
 					.split(",")
 					.map((s) => s.trim())
@@ -406,7 +404,6 @@
 					.map((s) => s.trim())
 					.filter(Boolean);
 
-				// ✅ Validation
 				if (optionsArray.length !== 4) {
 					errorBox.textContent =
 						"You must provide exactly 4 options (separated by commas).";
@@ -443,7 +440,6 @@
 							}),
 						});
 
-						// Replace options
 						const existRes = await fetch(`/option?question_id=${questionId}`, {
 							headers: authHeaders(),
 						});
