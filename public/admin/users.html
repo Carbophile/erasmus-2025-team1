@@ -1,27 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>QuizBattle Admin</title>
+		<link rel="stylesheet" href="../admin/css/users.css" />
+		<link rel="stylesheet" href="../admin/css/general.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+		/>
+   
+	</head>
+	<body>
+		<aside class="sidebar">
+			<div class="logo">QuizBattle</div>
+			<nav>
+				<a href="/admin/users" class="active"
+					><i class="fa-solid fa-users"></i><span>Users</span></a
+				>
+				<a href="/admin/questions"
+					><i class="fa-solid fa-question"></i><span>Questions</span></a
+				>
+			</nav>
+		</aside>
+     <div class="main">
+		<header class="topbar">
+				<div class="nav-left">
+					<a href="../index.html"><button class="btn" onclick="window.location.href='index.html'">Home</button></a>
+					<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
+				</div>
+				<div class="search-box">
+					<input type="text" placeholder="Search..." />
+					<i class="fa fa-search"></i>
+				</div>
+				<div class="nav-right">
+					<a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
+				</div>
+			</header>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>Admin</title>
-</head>
-
-<body>
-    <header>
-        <h1>Admin Page</h1>
-        <nav>
-            <ul>
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="#">leaderboard</a></li>
-            </ul>
-            <i class="fa-solid fa-user"></i>
-        </nav>
-    </header>
-    <main>
-    </main>
+  <section class="table-section">
+    <div class="table-header">
+      <h2>Users</h2>
+      <button class="btn add-btn" onclick="openForm()"><i class="fa fa-plus"></i> Add</button>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Score</th>
+          <th>Results</th>
+          <th>Admin</th>
+          <th>Edit</th>
+          <th>Delete</th>
+        </tr>
+        </thead>
+        <tbody id="user-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
+</div>
+<!-- Popup: Add/Edit User -->
+<div class="overlay" id="form-overlay">
+  <div class="card">
+    <h3 id="form-title">Add User</h3>
+    <form id="user-form">
+      <input type="hidden" name="id" />
+      <div class="form-group">
+        <label>Name</label><input type="text" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label><input type="email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label>Score</label><input type="number" name="score" required />
+      </div>
+      <div class="form-group">
+        <label>Admin</label>
+        <select name="admin">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <button type="submit" class="submit-btn">Save</button>
+    </form>
+    <button class="close-btn" onclick="closeOverlay('form-overlay')">Close</button>
+  </div>
+</div>
+<!-- Popup: Delete Confirmation -->
+<div class="overlay" id="delete-overlay">
+  <div class="card">
+    <h3 id="delete-title">Delete User</h3>
+    <p id="delete-message">Are you sure you want to delete this user?</p>
+    <div class="button-row">
+      <button class="cancel-btn" onclick="closeOverlay('delete-overlay')">Cancel</button>
+      <button class="confirm-btn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+<script>
+  let users = [
+    {id: 1, name: "Alice Johnson", email: "alice@example.com", score: 250, results: true, admin: true},
+    {id: 2, name: "Bob Smith", email: "bob@example.com", score: 180, results: true, admin: false},
+    {id: 3, name: "Charlie Lee", email: "charlie@example.com", score: 310, results: true, admin: false},
+    {id: 4, name: "Diana Prince", email: "diana@example.com", score: 400, results: true, admin: true}
+  ];
+  const tableBody = document.getElementById("user-table-body");
+  const formOverlay = document.getElementById("form-overlay");
+  const form = document.getElementById("user-form");
+  const formTitle = document.getElementById("form-title");
+  const submitBtn = form.querySelector(".submit-btn");
+  let deleteTarget = null;
+  function renderTable() {
+    tableBody.innerHTML = "";
+    users.forEach(user => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${user.id}</td>
+        <td>${user.name}</td>
+        <td>${user.email}</td>
+        <td>${user.score}</td>
+        <td>${user.results ? `<a href="userResult?id=${user.id}" class="btn small">Show</a>` : `<span style="color:#888;">No Results</span>`}</td>
+        <td>${user.admin ? "✔️" : "❌"}</td>
+        <td><button class="icon-btn" onclick="openForm(${user.id})"><i class="fa fa-pen"></i></button></td>
+        <td><button class="icon-btn danger" onclick="openDelete(${user.id})"><i class="fa fa-trash"></i></button></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+  renderTable();
+  function openForm(id = null) {
+    form.reset();
+    if (id) {
+      const u = users.find(u => u.id === id);
+      formTitle.textContent = "Edit User";
+      submitBtn.textContent = "Update";
+      form.id.value = u.id;
+      form.name.value = u.name;
+      form.email.value = u.email;
+      form.score.value = u.score;
+      form.admin.value = u.admin;
+    } else {
+      formTitle.textContent = "Add User";
+      submitBtn.textContent = "Save";
+      form.id.value = "";
+    }
+    formOverlay.style.display = "flex";
+  }
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (data.id) {
+      const idx = users.findIndex(u => u.id == data.id);
+      users[idx] = {
+        id: Number(data.id),
+        name: data.name,
+        email: data.email,
+        score: Number(data.score),
+        results: true,
+        admin: data.admin === "true"
+      };
+    } else {
+      const newUser = {
+        id: users.length ? Math.max(...users.map(u => u.id)) + 1 : 1,
+        name: data.name,
+        email: data.email,
+        score: Number(data.score),
+        results: true,
+        admin: data.admin === "true"
+      };
+      users.push(newUser);
+    }
+    renderTable();
+    closeOverlay("form-overlay");
+  });
+  function openDelete(id) {
+    deleteTarget = id;
+    document.getElementById("delete-overlay").style.display = "flex";
+  }
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    users = users.filter(u => u.id !== deleteTarget);
+    renderTable();
+    closeOverlay("delete-overlay");
+    deleteTarget = null;
+  }
+  function closeOverlay(id) {
+    document.getElementById(id).style.display = "none";
+  }
+</script>
 </body>
-
 </html>
