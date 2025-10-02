@@ -7,9 +7,6 @@
 <link rel="stylesheet" href="../admin/css/general.css" />
 <link rel="stylesheet" href="../admin/css/users.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-<style>
-
-</style>
 </head>
 <body>
 <aside class="sidebar">
@@ -50,6 +47,7 @@
           <th>Name</th>
           <th>Score Needed</th>
           <th>Max Time (s)</th>
+          <th>Questions</th>
           <th>Edit</th>
           <th>Delete</th>
         </tr>
@@ -105,25 +103,41 @@ let deleteTarget = null;
 
 async function fetchQuizzes() {
   try {
+    // Fetch all quizzes
     const res = await fetch("/quizzes", {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
-    if (data.success && Array.isArray(data.quizzes)) {
-      allQuizzes = data.quizzes;
-      renderTable();
-    } else {
-      console.error("Unexpected response:", data);
-    }
+    if (!data.success || !Array.isArray(data.quizzes)) throw new Error("Failed to load quizzes");
+    
+    allQuizzes = data.quizzes;
+
+    // Fetch counts for all quizzes in one request
+    const countRes = await fetch("/quiz/question/count", {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    });
+    const countData = await countRes.json();
+    if (!countData.success || !Array.isArray(countData.quizzes)) throw new Error("Failed to load quiz counts");
+
+    // Build a map of counts by quiz id
+    const countMap = {};
+    countData.quizzes.forEach(q => {
+      countMap[q.id] = q.question_count || 0;
+    });
+
+    // Add question_count to each quiz
+    allQuizzes = allQuizzes.map(q => ({ ...q, question_count: countMap[q.id] || 0 }));
+
+    renderTable();
   } catch (err) {
-    console.error("Fetch error:", err);
+    console.error(err);
   }
 }
 
 function renderTable() {
   tableBody.innerHTML = "";
   if (!allQuizzes.length) {
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#888;">No quizzes found</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#888;">No quizzes found</td></tr>`;
     return;
   }
   allQuizzes.forEach(q => {
@@ -133,6 +147,7 @@ function renderTable() {
       <td>${q.name}</td>
       <td>${q.score_needed}</td>
       <td>${q.max_time}</td>
+      <td>${q.question_count}</td>
       <td><button class="icon-btn" onclick='openForm(${JSON.stringify(q)})'><i class="fa fa-pen"></i></button></td>
       <td><button class="icon-btn danger" onclick="openDelete(${q.id})"><i class="fa fa-trash"></i></button></td>
     `;
@@ -204,14 +219,10 @@ async function confirmDelete() {
   try {
     const res = await fetch(`/quiz`, {
       method: "DELETE",
-      headers: { 
-        "Content-Type": "application/json", 
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ id: deleteTarget }) // <-- include the ID here
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: deleteTarget })
     });
     const result = await res.json();
-
     if (result.success) {
       allQuizzes = allQuizzes.filter(q => q.id !== deleteTarget);
       renderTable();

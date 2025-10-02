@@ -687,6 +687,32 @@ router.add("GET", "/quizzes", async (_request, env) => {
 	}
 });
 
+router.add("GET", "/quiz/question/count", async (_request, env) => {
+  try {
+    const db = getDB(env);
+
+    const quiz = new Quiz();
+    const quizzes = await quiz.loadAll(db);
+
+    const question = new Question();
+    const allQuestions = await question.loadAll(db);
+
+    const quizCounts = quizzes.map(q => {
+      const count = allQuestions.filter(ques => ques.quiz_id === q.id).length;
+      return {
+        ...q,
+        question_count: count
+      };
+    });
+
+    return new Response(JSON.stringify({ success: true, quizzes: quizCounts }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    return new Response(`Error: ${e.message}`, { status: 500 });
+  }
+});
+
 // QUESTION
 router.add("GET", "/question", async (request, env) => {
 	try {
