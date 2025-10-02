@@ -12,7 +12,7 @@
   <div class="nav" id="navBar">
     <div class="nav-left">
       <a href="home.html" class="fade-link">Home</a>
-      <a href="../profil/profil.html" class="fade-link">Profile</a>
+      <a href="../profil/profil.html" id="profile-link" class="fade-link">Profile</a>
     </div>
     <div class="nav-right">
       <span class="strelica">→</span>
@@ -55,5 +55,15 @@
     <button class="show-more">Show More</button>
   </div>
 </body>
+<script>
+  const isLoggedIn = localStorage.getItem("loggedIn");
+
+  document.getElementById("profile-link").addEventListener("click", function (event) {
+    if (!isLoggedIn) {
+      event.preventDefault(); n
+      window.location.href = "../login.html"; 
+    }
+  });
+</script>
 
 </html>
