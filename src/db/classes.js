@@ -12,6 +12,7 @@ export class User {
 		this.email = obj.email ?? null;
 		this.name = obj.name ?? null;
 		this.password = obj.password ?? null;
+		this.total_score = obj.total_score ?? null;
 		this.is_admin = obj.is_admin ?? null;
 		this.create_date = obj.create_date ?? null;
 		this.update_date = obj.update_date ?? null;

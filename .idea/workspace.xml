@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4b84f702-2866-4acd-8d28-a4feb5209456" name="Changes" comment="Basic quiz logic">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/classes.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/classes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/index.js" afterDir="false" />
-    </list>
+    <list default="true" id="4b84f702-2866-4acd-8d28-a4feb5209456" name="Changes" comment="Final polishing" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -95,9 +91,17 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1759387057399</updated>
-      <workItem from="1759387059113" duration="615000" />
+      <workItem from="1759387059113" duration="1462000" />
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Final polishing">
+      <option name="closed" value="true" />
+      <created>1759387808685</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1759387808685</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -117,6 +121,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Remove JetBrains IDE artefacts" />
     <MESSAGE value="Basic quiz logic" />
-    <option name="LAST_COMMIT_MESSAGE" value="Basic quiz logic" />
+    <MESSAGE value="Final polishing" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final polishing" />
   </component>
 </project>
