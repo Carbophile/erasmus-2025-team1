@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This project was created as part of the joint Erasmus+ program between the School of Design, Graphics and Sustainable Constriction from Croatia and Deltion College from the Netherlands. The project was developed by a team of students from both institutions, aiming to create an engaging quiz application about both countries.
+This project was created as part of the joint Erasmus+ program between the School of Design, Graphics and Sustainable Construction from Croatia and Deltion College from the Netherlands. The project was developed by a team of students from both institutions, aiming to create an engaging quiz application about both countries.
 
 **Team Lead:** Borna Punda ([@Carbophile](https://github.com/Carbophile)) - School of Design, Graphics and Sustainable Construction
 
