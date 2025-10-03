@@ -92,7 +92,17 @@
 </div>
 
 <script>
-const token = localStorage.getItem("token");
+const token = localStorage.getItem("authToken");
+if(!token) { window.location.href = "../login/index.html"; }
+async function ensureAdmin(){
+  try {
+    const res = await fetch('/user/isAdmin', { method:'POST', headers:{ Authorization:`Bearer ${token}` }});
+    if(!res.ok) throw new Error();
+    const data = await res.json();
+    if(!data.success || !data.isAdmin) return window.location.href = '../index.html';
+  } catch(_) { return window.location.href = '../login/index.html'; }
+}
+
 const tableBody = document.getElementById("quiz-table-body");
 const formOverlay = document.getElementById("form-overlay");
 const form = document.getElementById("quiz-form");
@@ -107,7 +117,7 @@ async function fetchQuizzes() {
     });
     const data = await res.json();
     if (!data.success || !Array.isArray(data.quizzes)) throw new Error("Failed to load quizzes");
-    
+
     allQuizzes = data.quizzes;
 
     const countRes = await fetch("/quiz/question/count", {
@@ -117,16 +127,10 @@ async function fetchQuizzes() {
     if (!countData.success || !Array.isArray(countData.quizzes)) throw new Error("Failed to load quiz counts");
 
     const countMap = {};
-    countData.quizzes.forEach(q => {
-      countMap[q.id] = q.question_count || 0;
-    });
-
+    countData.quizzes.forEach(q => { countMap[q.id] = q.question_count || 0; });
     allQuizzes = allQuizzes.map(q => ({ ...q, question_count: countMap[q.id] || 0 }));
-
     renderTable();
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 function renderTable() {
@@ -230,7 +234,10 @@ async function confirmDelete() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", fetchQuizzes);
+document.addEventListener('DOMContentLoaded', async () => {
+  await ensureAdmin();
+  await fetchQuizzes();
+});
 </script>
 </body>
 </html>

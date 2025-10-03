@@ -100,8 +100,23 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("authToken");
   if (!token) return window.location.href = "../login/index.html";
+
+  async function ensureAdmin() {
+    try {
+      const res = await fetch('/user/isAdmin', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!data.success || !data.isAdmin) {
+        return window.location.href = '../index.html';
+      }
+    } catch (_) {
+      return window.location.href = '../login/index.html';
+    }
+  }
+
+  await ensureAdmin();
 
   const tableBody = document.getElementById("category-table-body");
   let deleteTarget = null;

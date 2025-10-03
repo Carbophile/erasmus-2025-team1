@@ -190,7 +190,24 @@
 		</div>
 
 		<script>
-			const token = localStorage.getItem("token");
+			const token = localStorage.getItem("authToken");
+			if (!token) {
+				window.location.href = "../login/index.html";
+			}
+
+			async function ensureAdmin() {
+				try {
+					const res = await fetch('/user/isAdmin', { method: 'POST', headers: { Authorization: `Bearer ${token}` }});
+					if(!res.ok) throw new Error();
+					const data = await res.json();
+					if(!data.success || !data.isAdmin) {
+						return window.location.href = '../index.html';
+					}
+				} catch(_) {
+					return window.location.href = '../login/index.html';
+				}
+			}
+
 			const tableBody = document.getElementById("questions-table-body");
 			const form = document.getElementById("question-form");
 			const formTitle = document.getElementById("form-title");
@@ -335,6 +352,7 @@
 
 			// DOMContentLoaded
 			document.addEventListener("DOMContentLoaded", async () => {
+				await ensureAdmin();
 				await fetchCategories();
 				await fetchQuizzes();
 				await fetchQuestions();
@@ -547,6 +565,7 @@
 			}
 
 			document.addEventListener("DOMContentLoaded", async () => {
+				await ensureAdmin();
 				await fetchCategories();
 				await fetchQuizzes();
 				await fetchQuestions();
