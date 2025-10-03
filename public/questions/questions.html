@@ -64,9 +64,6 @@
             <div class="points" id="points">Score: 0</div>
         </div>
         <div class="card-content">
-            <div class="image-container">
-                <img id="question-image" src="" alt="Slika pitanja" />
-            </div>
             <div class="quiz-content" id="quiz-root">
             </div>
         </div>
@@ -94,7 +91,6 @@
         const timerElement = document.getElementById('timer');
         const pointsElement = document.getElementById('points');
         const root = document.getElementById('quiz-root');
-        const imageEl = document.getElementById('question-image');
 
         let signedState = null;
         let currentQuestion = null;
@@ -157,7 +153,6 @@
                 div.addEventListener('click', () => selectAnswer(opt.id, div));
                 answersDiv.appendChild(div);
             });
-            if (q.image) { imageEl.src = q.image; imageEl.style.display = 'block'; } else { imageEl.style.display = 'none'; }
             if (!firstQuizId) firstQuizId = q.quiz_id; // remember first quiz id for result association
             setTimer(QUESTION_TIME);
             lastFeedback = null;
