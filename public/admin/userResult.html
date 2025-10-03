@@ -59,23 +59,20 @@
 					<table>
 						<thead>
 							<tr>
-								<th>Result Id</th>
+								<th>Id</th>
 								<th>Score</th>
 								<th>Time Taken</th>
-								<th>Quiz Id</th>
+								<th>Quiz</th>
 								<th>Date</th>
 								<th>Delete</th>
 							</tr>
 						</thead>
-						<tbody id="results-table-body">
-							<!-- Filled dynamically -->
-						</tbody>
+						<tbody id="results-table-body"></tbody>
 					</table>
 				</div>
 			</section>
 		</div>
 
-		<!-- Delete Confirmation Overlay -->
 		<div class="overlay" id="delete-overlay" style="display: none">
 			<div class="overlay-content">
 				<h3>Delete Result</h3>
@@ -98,6 +95,7 @@
 					return;
 				}
 
+				// Fetch user info
 				let userName = `User ${userId}`;
 				try {
 					const userRes = await fetch(`/user?id=${userId}`, {
@@ -112,6 +110,26 @@
 				}
 				resultsTitle.textContent = `Results for ${userName}`;
 
+				// Fetch all quizzes
+				let quizMap = {};
+				try {
+					const quizRes = await fetch("/quizzes", {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (quizRes.ok) {
+						const quizData = await quizRes.json();
+						if (quizData.success && Array.isArray(quizData.quizzes)) {
+							quizMap = quizData.quizzes.reduce((map, q) => {
+								map[q.id] = q.name;
+								return map;
+							}, {});
+						}
+					}
+				} catch (err) {
+					console.error("Error fetching quizzes:", err);
+				}
+
+				// Fetch user results
 				let allResults = [];
 				try {
 					const res = await fetch(`/result?user_id=${userId}`, {
@@ -132,17 +150,19 @@
 
 					resultsTable.innerHTML = "";
 					allResults.forEach((result) => {
+						const quizName =
+							quizMap[result.quiz_id] || `Quiz ${result.quiz_id}`;
 						const row = document.createElement("tr");
 						row.innerHTML = `
-        <td>${result.id}</td>
-        <td>${result.score}</td>
-        <td>${result.time_taken}</td>
-        <td>${result.quiz_id}</td>
-        <td>${new Date(result.create_date).toLocaleString()}</td>
-        <td><button class="icon-btn danger" onclick="openDeleteOverlay(${
-					result.id
-				}, this)"><i class="fa fa-trash"></i></button></td>
-      `;
+                <td>${result.id}</td>
+                <td>${result.score}</td>
+                <td>${result.time_taken}</td>
+                <td>${quizName}</td>
+                <td>${new Date(result.create_date).toLocaleString()}</td>
+                <td><button class="icon-btn danger" onclick="openDeleteOverlay(${
+									result.id
+								}, this)"><i class="fa fa-trash"></i></button></td>
+            `;
 						resultsTable.appendChild(row);
 					});
 				}
@@ -152,7 +172,7 @@
 				const overlay = document.getElementById("delete-overlay");
 				const confirmBtn = document.getElementById("confirm-delete");
 				const cancelBtn = document.getElementById("cancel-delete");
-				let deleteTarget = null; 
+				let deleteTarget = null;
 
 				window.openDeleteOverlay = (resultId, btn) => {
 					deleteTarget = { resultId, row: btn.closest("tr") };
@@ -195,14 +215,6 @@
 					}
 				});
 			});
-		</script>
-		<script src="../components/sidebar.html" type="import"></script>
-		<script src="../components/topbar.html" type="import"></script>
-		<script type="module" src="../admin/js/components.js"></script>
-		<script type="module">
-			import { loadComponent } from "../admin/js/components.js";
-			loadComponent("sidebar-template", "sidebar-container");
-			loadComponent("topbar-template", "topbar-container");
 		</script>
 	</body>
 </html>
