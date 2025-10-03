@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuizBattle Admin - Quizzes</title>
+<link rel="stylesheet" href="../admin/css/general.css" />
+<link rel="stylesheet" href="../admin/css/users.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">QuizBattle</div>
+  <nav>
+    <a href="/admin/users"><i class="fa-solid fa-users"></i><span>Users</span></a>
+    <a href="/admin/questions"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+    <a href="/admin/quizzes" class="active"><i class="fa-solid fa-file-circle-question"></i><span>Quizzes</span></a>
+    <a href="/admin/categories"><i class="fa-solid fa-icons"></i><span>Categories</span></a>
+  </nav>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="nav-left">
+      <a href="../index.html"><button class="btn">Home</button></a>
+      <a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
+    </div>
+    <div class="search-box">
+      <input type="text" placeholder="Search..." />
+      <i class="fa fa-search"></i>
+    </div>
+    <div class="nav-right">
+      <a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
+    </div>
+  </header>
+
+<section class="table-section">
+  <div class="table-header">
+    <h2>Quizzes</h2>
+    <button class="btn add-btn" onclick="openForm()"><i class="fa fa-plus"></i> Add</button>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Quiz</th>
+          <th>Score Needed</th>
+          <th>Max Time (s)</th>
+          <th>Questions</th>
+          <th>Edit</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="quiz-table-body"></tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<div class="overlay" id="form-overlay">
+  <div class="card">
+    <h3 id="form-title">Add Quiz</h3>
+    <form id="quiz-form">
+      <input type="hidden" name="id" />
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Score Needed</label>
+        <input type="number" name="score_needed" required />
+      </div>
+      <div class="form-group">
+        <label>Max Time (seconds)</label>
+        <input type="number" name="max_time" required />
+      </div>
+      <button type="submit" class="submit-btn">Save</button>
+    </form>
+    <button class="close-btn" onclick="closeOverlay('form-overlay')">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="delete-overlay">
+  <div class="card">
+    <h3>Delete Quiz</h3>
+    <p>Are you sure you want to delete this quiz?</p>
+    <div class="button-row">
+      <button class="cancel-btn" onclick="closeOverlay('delete-overlay')">Cancel</button>
+      <button class="confirm-btn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+const tableBody = document.getElementById("quiz-table-body");
+const formOverlay = document.getElementById("form-overlay");
+const form = document.getElementById("quiz-form");
+const formTitle = document.getElementById("form-title");
+let allQuizzes = [];
+let deleteTarget = null;
+
+async function fetchQuizzes() {
+  try {
+    const res = await fetch("/quizzes", {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.quizzes)) throw new Error("Failed to load quizzes");
+    
+    allQuizzes = data.quizzes;
+
+    const countRes = await fetch("/quiz/question/count", {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    });
+    const countData = await countRes.json();
+    if (!countData.success || !Array.isArray(countData.quizzes)) throw new Error("Failed to load quiz counts");
+
+    const countMap = {};
+    countData.quizzes.forEach(q => {
+      countMap[q.id] = q.question_count || 0;
+    });
+
+    allQuizzes = allQuizzes.map(q => ({ ...q, question_count: countMap[q.id] || 0 }));
+
+    renderTable();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderTable() {
+  tableBody.innerHTML = "";
+  if (!allQuizzes.length) {
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#888;">No quizzes found</td></tr>`;
+    return;
+  }
+  allQuizzes.forEach(q => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${q.name}</td>
+      <td>${q.score_needed}</td>
+      <td>${q.max_time}</td>
+      <td>${q.question_count}</td>
+      <td><button class="icon-btn" onclick='openForm(${JSON.stringify(q)})'><i class="fa fa-pen"></i></button></td>
+      <td><button class="icon-btn danger" onclick="openDelete(${q.id})"><i class="fa fa-trash"></i></button></td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+function openForm(quiz = null) {
+  form.reset();
+  if (quiz) {
+    formTitle.textContent = "Edit Quiz";
+    form.id.value = quiz.id;
+    form.name.value = quiz.name;
+    form.score_needed.value = quiz.score_needed;
+    form.max_time.value = quiz.max_time;
+  } else {
+    formTitle.textContent = "Add Quiz";
+  }
+  formOverlay.style.display = "flex";
+}
+
+function closeOverlay(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(form).entries());
+  const payload = {
+    name: data.name,
+    score_needed: Number(data.score_needed),
+    max_time: Number(data.max_time)
+  };
+  try {
+    let res;
+    if (data.id) {
+      payload.id = Number(data.id);
+      res = await fetch("/quiz", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await fetch("/quiz/new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+    }
+    const result = await res.json();
+    if (result.success) {
+      fetchQuizzes();
+      closeOverlay("form-overlay");
+    } else {
+      alert(result.error || "Save failed");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+function openDelete(id) {
+  deleteTarget = id;
+  document.getElementById("delete-overlay").style.display = "flex";
+}
+
+async function confirmDelete() {
+  if (!deleteTarget) return;
+  try {
+    const res = await fetch(`/quiz`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: deleteTarget })
+    });
+    const result = await res.json();
+    if (result.success) {
+      allQuizzes = allQuizzes.filter(q => q.id !== deleteTarget);
+      renderTable();
+      closeOverlay("delete-overlay");
+      deleteTarget = null;
+    } else {
+      alert(result.error || "Delete failed");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", fetchQuizzes);
+</script>
+</body>
+</html>

@@ -1,82 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>QuizBattle Admin</title>
-		<link rel="stylesheet" href="../admin/css/questions.css" />
-		<link rel="stylesheet" href="../admin/css/general.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-		/>
-		<style></style>
-	</head>
-	<body>
-		<aside class="sidebar">
-			<div class="logo">QuizBattle</div>
-			<nav>
-				<a href="/admin/users"
-					><i class="fa-solid fa-users"></i><span>Users</span></a
-				>
-				<a href="/admin/questions" class="active"
-					><i class="fa-solid fa-question"></i><span>Questions</span></a
-				>
-			</nav>
-		</aside>
-		<div class="main">
-			<header class="topbar">
-				<div class="nav-left">
-					<a href="../index.html"><button class="btn" onclick="window.location.href='index.html'">Home</button></a>
-					<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
-				</div>
-				<div class="search-box">
-					<input type="text" placeholder="Search..." />
-					<i class="fa fa-search"></i>
-				</div>
-				<div class="nav-right">
-					<a href="../profil/profil.html"
-						><i class="fa-solid fa-user user-icon"></i
-					></a>
-				</div>
-			</header>
+<head>
+	<meta charset="utf-8" />
+	<title>QuizBattle Admin - Questions</title>
+	<link rel="stylesheet" href="../admin/css/general.css" />
+	<link rel="stylesheet" href="../admin/css/questions.css" />
+	<link
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+	/>
+</head>
+<body>
+	<aside class="sidebar">
+		<div class="logo">QuizBattle</div>
+		<nav>
+			<a href="/admin/users"><i class="fa-solid fa-users"></i><span>Users</span></a>
+			<a href="/admin/questions" class="active"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+			<a href="/admin/quizzes"><i class="fa-solid fa-file-circle-question"></i><span>Quizzes</span></a>
+			<a href="/admin/categories"><i class="fa-solid fa-icons"></i><span>Categories</span></a>
+		</nav>
+	</aside>
 
-			<section class="table-section">
-				<div class="table-header">
-					<h2>Questions</h2>
-					<button class="btn add-btn" onclick="openForm()">
+	<div class="main">
+		<header class="topbar">
+			<div class="nav-left">
+				<a href="../index.html"><button class="btn">Home</button></a>
+				<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
+			</div>
+			<div class="search-box">
+				<input type="text" placeholder="Search..." />
+				<i class="fa fa-search"></i>
+			</div>
+			<div class="nav-right">
+				<a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
+			</div>
+		</header>
+
+		<section class="table-section">
+			<div class="table-header">
+				<h2>Questions</h2>
+				<div class="header-actions">
+					<div class="filters">
+						<label>
+							Category:
+							<select id="filter-category">
+								<option value="">All Categories</option>
+							</select>
+						</label>
+						<label>
+							Country:
+							<select id="filter-country">
+								<option value="">All Countries</option>
+								<option value="0">HR</option>
+								<option value="1">NL</option>
+							</select>
+						</label>
+					</div>
+					<button class="btn add-btn" onclick="openFormForCreate()">
 						<i class="fa fa-plus"></i> Add
 					</button>
 				</div>
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Id</th>
-								<th>Question</th>
-								<th>Options</th>
-								<th>Category</th>
-								<th>Country</th>
-								<th>Quiz Id</th>
-								<th>Edit</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="questions-table-body"></tbody>
-					</table>
-				</div>
-			</section>
-		</div>
-		<!-- Popup: View answers -->
+			</div>
+
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Id</th>
+							<th>Question</th>
+							<th>Options</th>
+							<th>Category</th>
+							<th>Country</th>
+							<th>Quiz</th>
+							<th>Edit</th>
+							<th>Delete</th>
+						</tr>
+					</thead>
+					<tbody id="questions-table-body"></tbody>
+				</table>
+			</div>
+		</section>
+	</div>
+
+
+		<!-- Show Answers Overlay -->
 		<div class="overlay" id="view-overlay">
 			<div class="card" id="answer-card">
 				<h3>Question</h3>
 				<ul class="options-list"></ul>
-				<button class="close-btn" onclick="closeOverlay('view-overlay')">
-					Close
-				</button>
+				<div style="text-align: right; margin-top: 12px">
+					<button class="close-btn btn" onclick="closeOverlay('view-overlay')">
+						Close
+					</button>
+				</div>
 			</div>
 		</div>
-		<!-- Popup: Add/Edit Form -->
+
+		<!-- Add/Edit Form Overlay -->
 		<div class="overlay" id="form-overlay">
 			<div class="card">
 				<h3 id="form-title">Add Question</h3>
@@ -86,195 +106,458 @@
 						<label>Question</label>
 						<input type="text" name="question" required />
 					</div>
+
 					<div class="form-group">
-						<label>Options (comma separated)</label>
-						<input type="text" name="options" required />
+						<label>Options (comma separated — exactly 4)</label>
+						<input
+							type="text"
+							name="options"
+							placeholder="opt1, opt2, opt3, opt4"
+							required
+						/>
 					</div>
+
 					<div class="form-group">
-						<label>Correct Answers (comma separated)</label>
-						<input type="text" name="correct" required />
+						<label
+							>Correct Answers (comma separated — must match one of the 4
+							options)</label
+						>
+						<input
+							type="text"
+							name="correct"
+							placeholder="correctOptionText"
+							required
+						/>
 					</div>
+
 					<div class="form-group">
 						<label>Category</label>
-						<input type="text" name="category" required />
+						<select name="category" id="category-select"></select>
 					</div>
+
 					<div class="form-group">
 						<label>Country</label>
-						<select name="country" required>
-							<option value="HR">HR</option>
-							<option value="NL">NL</option>
+						<select name="country">
+							<option value="0">HR</option>
+							<option value="1">NL</option>
 						</select>
 					</div>
+
 					<div class="form-group">
-						<label>Quiz Id</label>
-						<input type="number" name="quizId" required />
+						<label>Quiz</label>
+						<select name="quizId" id="quiz-select"></select>
 					</div>
-					<button type="submit" class="submit-btn">Save</button>
+
+					<div id="form-error" class="error-message"></div>
+
+					<div style="text-align: right">
+						<button type="submit" class="submit-btn btn">Save</button>
+					</div>
 				</form>
-				<button class="close-btn" onclick="closeOverlay('form-overlay')">
-					Close
-				</button>
-			</div>
-		</div>
-		<!-- Popup: Delete Confirmation -->
-		<div class="overlay" id="delete-overlay">
-			<div class="card">
-				<h3 id="delete-title">Delete Item</h3>
-				<p id="delete-message">Are you sure you want to delete this item?</p>
-				<div class="button-row">
-					<button class="cancel-btn" onclick="closeOverlay('delete-overlay')">
-						Cancel
+
+				<div style="text-align: right; margin-top: 8px">
+					<button class="btn close-btn" onclick="closeOverlay('form-overlay')">
+						Close
 					</button>
-					<button class="confirm-btn" onclick="confirmDelete()">Delete</button>
 				</div>
 			</div>
 		</div>
+
+		<!-- Delete Confirmation Overlay -->
+		<div class="overlay" id="delete-overlay">
+			<div class="card">
+				<h3>Delete Question</h3>
+				<p>Are you sure you want to delete this question?</p>
+				<div
+					style="
+						display: flex;
+						gap: 8px;
+						justify-content: flex-end;
+						margin-top: 12px;
+					"
+				>
+					<button
+						class="cancel-btn btn"
+						onclick="closeOverlay('delete-overlay')"
+					>
+						Cancel
+					</button>
+					<button class="confirm-btn btn" onclick="confirmDelete()">
+						Delete
+					</button>
+				</div>
+			</div>
+		</div>
+
 		<script>
-			let questions = [
-				{
-					id: 1,
-					question: "Which of these are programming languages?",
-					options: ["Python", "Java", "Car", "Banana"],
-					correct: ["Python", "Java"],
-					category: "Tech",
-					country: "HR",
-					quizId: 1,
-				},
-				{
-					id: 2,
-					question: "Which are planets?",
-					options: ["Mars", "Venus", "Dog", "Jupiter"],
-					correct: ["Mars", "Venus", "Jupiter"],
-					category: "Science",
-					country: "NL",
-					quizId: 2,
-				},
-			];
+			const token = localStorage.getItem("token");
 			const tableBody = document.getElementById("questions-table-body");
-			const formOverlay = document.getElementById("form-overlay");
 			const form = document.getElementById("question-form");
 			const formTitle = document.getElementById("form-title");
-			const submitBtn = form.querySelector(".submit-btn");
+			const errorBox = document.getElementById("form-error");
+			const categoryFilter = document.getElementById("filter-category");
+			const countryFilter = document.getElementById("filter-country");
+
+			let allQuestions = [];
+			let allCategories = [];
+			let allQuizzes = [];
 			let deleteTarget = null;
+
+			function authHeaders() {
+				const h = { "Content-Type": "application/json" };
+				if (token) h["Authorization"] = `Bearer ${token}`;
+				return h;
+			}
+
+			async function fetchQuestions() {
+				try {
+					const res = await fetch("/questions", { headers: authHeaders() });
+					const data = await res.json();
+					if (data && data.success && Array.isArray(data.questions)) {
+						allQuestions = data.questions;
+						renderTable();
+					}
+				} catch (err) {
+					console.error("fetchQuestions error", err);
+				}
+			}
+
+			async function fetchCategories() {
+				try {
+					const res = await fetch("/categories", { headers: authHeaders() });
+					const data = await res.json();
+					if (data && data.success && Array.isArray(data.categories)) {
+						allCategories = data.categories;
+						const select = document.getElementById("category-select");
+						const filterSelect = document.getElementById("filter-category");
+						select.innerHTML = '<option value="">Select</option>';
+						filterSelect.innerHTML = '<option value="">All Categories</option>';
+						allCategories.forEach((cat) => {
+							const opt1 = document.createElement("option");
+							opt1.value = cat.id;
+							opt1.textContent = cat.name;
+							select.appendChild(opt1);
+
+							const opt2 = document.createElement("option");
+							opt2.value = cat.id;
+							opt2.textContent = cat.name;
+							filterSelect.appendChild(opt2);
+						});
+					}
+				} catch (err) {
+					console.error("fetchCategories error", err);
+				}
+			}
+
+			async function fetchQuizzes() {
+				try {
+					const res = await fetch("/quizzes", { headers: authHeaders() });
+					const data = await res.json();
+					if (data && data.success && Array.isArray(data.quizzes)) {
+						allQuizzes = data.quizzes;
+						const select = document.getElementById("quiz-select");
+						select.innerHTML = "";
+						allQuizzes.forEach((qz) => {
+							const opt = document.createElement("option");
+							opt.value = qz.id;
+							opt.textContent = qz.name;
+							select.appendChild(opt);
+						});
+					}
+				} catch (err) {
+					console.error("fetchQuizzes error", err);
+				}
+			}
+
+			function categoryNameById(id) {
+				const cat = allCategories.find((c) => c.id === id);
+				return cat ? cat.name : id ?? "-";
+			}
+			function quizNameById(id) {
+				const quiz = allQuizzes.find((q) => q.id === id);
+				return quiz ? quiz.name : id ?? "-";
+			}
+
+			function escapeHtml(s) {
+				if (!s && s !== 0) return "";
+				return String(s).replace(
+					/[&<>"']/g,
+					(c) =>
+						({
+							"&": "&amp;",
+							"<": "&lt;",
+							">": "&gt;",
+							'"': "&quot;",
+							"'": "&#39;",
+						}[c])
+				);
+			}
+
 			function renderTable() {
 				tableBody.innerHTML = "";
-				questions.forEach((q) => {
+				let filtered = allQuestions.slice();
+				const catId = categoryFilter.value;
+				const countryVal = countryFilter.value;
+
+				if (catId) filtered = filtered.filter((q) => q.category_id == catId);
+				if (countryVal)
+					filtered = filtered.filter((q) => String(q.country) === countryVal);
+
+				if (!filtered.length) {
+					tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#888">No questions found</td></tr>`;
+					return;
+				}
+
+				filtered.forEach((q) => {
 					const row = document.createElement("tr");
 					row.innerHTML = `
-						<td>${q.id}</td>
-						<td>${q.question}</td>
-						<td><button class="btn small" onclick="showAnswers(${q.id})">Show</button></td>
-						<td>${q.category}</td>
-						<td>${q.country}</td>
-						<td>${q.quizId}</td>
-						<td><button class="icon-btn" onclick="openForm(${q.id})"><i class="fa fa-pen"></i></button></td>
-						<td><button class="icon-btn danger" onclick="openDelete(${q.id}, 'question')"><i class="fa fa-trash"></i></button></td>
-					`;
+      <td>${q.id}</td>
+      <td>${escapeHtml(q.text)}</td>
+      <td><button class="btn small" onclick="showAnswers(${
+				q.id
+			})">Show<i class="fa fa-solid fa-eye"></i></button></td>
+      <td>${escapeHtml(categoryNameById(q.category_id))}</td>
+      <td>${q.country === 0 ? "HR" : q.country === 1 ? "NL" : q.country}</td>
+      <td>${escapeHtml(quizNameById(q.quiz_id))}</td>
+      <td><button class="icon-btn" onclick="openFormForEdit(${
+				q.id
+			})"><i class="fa fa-pen"></i></button></td>
+      <td><button class="icon-btn danger" onclick="openDelete(${
+				q.id
+			})"><i class="fa fa-trash"></i></button></td>`;
 					tableBody.appendChild(row);
 				});
 			}
-			renderTable();
-			// Show answers
-			function showAnswers(id) {
-				const q = questions.find((q) => q.id === id);
-				const card = document.getElementById("answer-card");
-				card.querySelector("h3").textContent = q.question;
-				const optionsList = card.querySelector(".options-list");
-				optionsList.innerHTML = "";
-				q.options.forEach((opt) => {
-					const li = document.createElement("li");
-					li.textContent = opt;
-					if (q.correct.includes(opt)) li.classList.add("correct");
-					optionsList.appendChild(li);
-				});
-				document.getElementById("view-overlay").style.display = "flex";
-			}
-			// Open Add/Edit form
-			function openForm(id = null) {
-				form.reset();
-				if (id) {
-					const q = questions.find((q) => q.id === id);
-					formTitle.textContent = "Edit Question";
-					submitBtn.textContent = "Update";
-					form.id.value = q.id;
-					form.question.value = q.question;
-					form.options.value = q.options.join(", ");
-					form.correct.value = q.correct.join(", ");
-					form.category.value = q.category;
-					form.country.value = q.country;
-					form.quizId.value = q.quizId;
-				} else {
-					formTitle.textContent = "Add Question";
-					submitBtn.textContent = "Save";
-					form.id.value = "";
+
+			// Filter listeners
+			categoryFilter.addEventListener("change", renderTable);
+			countryFilter.addEventListener("change", renderTable);
+
+			// DOMContentLoaded
+			document.addEventListener("DOMContentLoaded", async () => {
+				await fetchCategories();
+				await fetchQuizzes();
+				await fetchQuestions();
+			});
+
+			async function showAnswers(questionId) {
+				try {
+					const res = await fetch(`/option?question_id=${questionId}`, {
+						headers: authHeaders(),
+					});
+					const data = await res.json();
+					const options = Array.isArray(data)
+						? data
+						: Array.isArray(data.options)
+						? data.options
+						: [];
+					const q = allQuestions.find((x) => x.id === questionId);
+					const card = document.getElementById("answer-card");
+					card.querySelector("h3").textContent = q
+						? q.text || "Question"
+						: "Question";
+
+					const optionsList = card.querySelector(".options-list");
+					optionsList.innerHTML = "";
+					options.forEach((opt) => {
+						const li = document.createElement("li");
+						li.textContent = opt.option ?? opt.text ?? JSON.stringify(opt);
+						if (
+							opt.correct === 1 ||
+							opt.is_correct === 1 ||
+							opt.correct === true
+						)
+							li.classList.add("correct");
+						optionsList.appendChild(li);
+					});
+					document.getElementById("view-overlay").style.display = "flex";
+				} catch (err) {
+					console.error("showAnswers error", err);
 				}
-				formOverlay.style.display = "flex";
 			}
-			// Close overlay
+
+			function openFormForCreate() {
+				form.reset();
+				errorBox.textContent = "";
+				formTitle.textContent = "Add Question";
+				form.querySelector("[name=id]").value = "";
+				document.getElementById("form-overlay").style.display = "flex";
+			}
+
+			async function openFormForEdit(questionId) {
+				const q = allQuestions.find((x) => x.id === questionId);
+				if (!q) return;
+				try {
+					const res = await fetch(`/option?question_id=${questionId}`, {
+						headers: authHeaders(),
+					});
+					const options = await res.json();
+					const opts = Array.isArray(options)
+						? options
+						: Array.isArray(options.options)
+						? options.options
+						: [];
+					form.reset();
+					errorBox.textContent = "";
+					formTitle.textContent = "Edit Question";
+					form.querySelector("[name=id]").value = q.id;
+					form.querySelector("[name=question]").value = q.text || "";
+					form.querySelector("[name=options]").value = opts
+						.map((o) => o.option ?? o.text ?? "")
+						.join(", ");
+					form.querySelector("[name=correct]").value = opts
+						.filter(
+							(o) => o.correct === 1 || o.is_correct === 1 || o.correct === true
+						)
+						.map((o) => o.option ?? o.text)
+						.join(", ");
+					form.querySelector("[name=country]").value = q.country ?? 0;
+					form.querySelector("[name=quizId]").value = q.quiz_id ?? "";
+					form.querySelector("[name=category]").value = q.category_id ?? "";
+					document.getElementById("form-overlay").style.display = "flex";
+				} catch (err) {
+					console.error("openFormForEdit error", err);
+				}
+			}
+
 			function closeOverlay(id) {
 				document.getElementById(id).style.display = "none";
 			}
-			// Submit handler (add or edit)
-			form.addEventListener("submit", (e) => {
+
+			form.addEventListener("submit", async (e) => {
 				e.preventDefault();
-				const data = Object.fromEntries(new FormData(form).entries());
-				const correctArr = data.correct
+				errorBox.textContent = "";
+				const fd = Object.fromEntries(new FormData(form).entries());
+				const questionText = fd.question.trim();
+				const quizId = Number(fd.quizId);
+				const category_id = Number(fd.category) || null;
+				const country = Number(fd.country || 0);
+				const optionsArray = fd.options
 					.split(",")
-					.map((o) => o.trim())
-					.filter((o) => o);
-				const optionsArr = data.options
+					.map((s) => s.trim())
+					.filter(Boolean);
+				const correctArray = fd.correct
 					.split(",")
-					.map((o) => o.trim())
-					.filter((o) => o);
-				if (data.id) {
-					// Edit
-					const idx = questions.findIndex((q) => q.id == data.id);
-					questions[idx] = {
-						id: Number(data.id),
-						question: data.question,
-						options: optionsArr,
-						correct: correctArr,
-						category: data.category,
-						country: data.country,
-						quizId: Number(data.quizId),
-					};
-				} else {
-					// Add
-					const newQ = {
-						id: questions.length
-							? Math.max(...questions.map((q) => q.id)) + 1
-							: 1,
-						question: data.question,
-						options: optionsArr,
-						correct: correctArr,
-						category: data.category,
-						country: data.country,
-						quizId: Number(data.quizId),
-					};
-					questions.push(newQ);
+					.map((s) => s.trim())
+					.filter(Boolean);
+
+				if (optionsArray.length !== 4) {
+					errorBox.textContent =
+						"You must provide exactly 4 options (separated by commas).";
+					return;
 				}
-				renderTable();
-				closeOverlay("form-overlay");
+
+				const invalidCorrect = correctArray.filter(
+					(c) => !optionsArray.includes(c)
+				);
+				if (invalidCorrect.length > 0) {
+					errorBox.textContent = `Invalid correct answers: ${invalidCorrect.join(
+						", "
+					)}. They must exactly match one of the options.`;
+					return;
+				}
+
+				const optionsPayload = optionsArray.map((opt) => ({
+					option: opt,
+					correct: correctArray.includes(opt) ? 1 : 0,
+				}));
+
+				try {
+					if (fd.id) {
+						const questionId = Number(fd.id);
+						await fetch("/question", {
+							method: "PUT",
+							headers: authHeaders(),
+							body: JSON.stringify({
+								id: questionId,
+								text: questionText,
+								category_id,
+								country,
+								quiz_id: quizId,
+							}),
+						});
+
+						const existRes = await fetch(`/option?question_id=${questionId}`, {
+							headers: authHeaders(),
+						});
+						const existOptions = await existRes.json();
+						const existList = Array.isArray(existOptions)
+							? existOptions
+							: Array.isArray(existOptions.options)
+							? existOptions.options
+							: [];
+						for (const opt of existList) {
+							await fetch("/option", {
+								method: "DELETE",
+								headers: authHeaders(),
+								body: JSON.stringify({ id: opt.id }),
+							});
+						}
+						for (const opt of optionsPayload) {
+							await fetch("/option", {
+								method: "POST",
+								headers: authHeaders(),
+								body: JSON.stringify({
+									question_id: questionId,
+									option: opt.option,
+									correct: opt.correct,
+								}),
+							});
+						}
+					} else {
+						await fetch("/quiz/question", {
+							method: "POST",
+							headers: authHeaders(),
+							body: JSON.stringify({
+								text: questionText,
+								category_id,
+								country,
+								quiz_id: quizId,
+								options: optionsPayload,
+							}),
+						});
+					}
+
+					await fetchQuestions();
+					closeOverlay("form-overlay");
+				} catch (err) {
+					console.error("submit error", err);
+					errorBox.textContent = "Failed to save question. Please try again.";
+				}
 			});
-			// Open delete confirmation
-			function openDelete(id, type) {
-				deleteTarget = { id, type };
-				document.getElementById("delete-title").textContent = `Delete ${type}`;
-				document.getElementById(
-					"delete-message"
-				).textContent = `Are you sure you want to delete this ${type}?`;
+
+			function openDelete(id) {
+				deleteTarget = id;
 				document.getElementById("delete-overlay").style.display = "flex";
 			}
-			// Confirm delete
-			function confirmDelete() {
+			async function confirmDelete() {
 				if (!deleteTarget) return;
-				if (deleteTarget.type === "question") {
-					questions = questions.filter((q) => q.id !== deleteTarget.id);
+				try {
+					await fetch("/question", {
+						method: "DELETE",
+						headers: authHeaders(),
+						body: JSON.stringify({ id: deleteTarget }),
+					});
+					allQuestions = allQuestions.filter((q) => q.id !== deleteTarget);
 					renderTable();
+				} finally {
+					closeOverlay("delete-overlay");
+					deleteTarget = null;
 				}
-				closeOverlay("delete-overlay");
-				deleteTarget = null;
 			}
+
+			document.addEventListener("DOMContentLoaded", async () => {
+				await fetchCategories();
+				await fetchQuizzes();
+				await fetchQuestions();
+			});
+
+			window.showAnswers = showAnswers;
+			window.openFormForEdit = openFormForEdit;
+			window.openFormForCreate = openFormForCreate;
+			window.openDelete = openDelete;
+			window.confirmDelete = confirmDelete;
+			window.closeOverlay = closeOverlay;
 		</script>
 	</body>
 </html>

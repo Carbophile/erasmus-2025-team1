@@ -46,7 +46,6 @@ router.add("GET", "/user", async (request, env) => {
 		if (id) found = await user.load(db, id);
 		else if (email) found = await user.loadByEmail(db, email);
 		if (!found) return new Response("Not Found", { status: 404 });
-		// remove password from user object
 		delete user.password;
 		return new Response(JSON.stringify(user), {
 			headers: { "Content-Type": "application/json" },
@@ -56,21 +55,47 @@ router.add("GET", "/user", async (request, env) => {
 	}
 });
 
-router.add("PUT", "/user", (request, env) =>
+router.add("PATCH", "/user", (request, env) =>
 	withAuth(request, env, async (request, env) => {
 		try {
 			const db = getDB(env);
 			const data = await request.json();
-			const userToUpdate = new User(data);
 
-			// a user can only update their own data, unless they are an admin
-			if (request.user.id !== userToUpdate.id && !request.user.is_admin) {
+			if (!data.id) return new Response("Missing user id", { status: 400 });
+
+			const existingUserResult = await db
+				.prepare("SELECT * FROM users WHERE id = ?")
+				.bind(data.id)
+				.first();
+
+			if (!existingUserResult)
+				return new Response("User not found", { status: 404 });
+
+			if (request.user.id !== existingUserResult.id && !request.user.is_admin) {
 				return new Response("Forbidden", { status: 403 });
 			}
 
-			if (!userToUpdate.id)
-				return new Response("Missing user id", { status: 400 });
-			await userToUpdate.update(db);
+			const userToUpdate = {
+				id: existingUserResult.id,
+				name: data.name ?? existingUserResult.name,
+				email: data.email ?? existingUserResult.email,
+				password: data.password ?? existingUserResult.password, // keep existing if not provided
+				is_admin: data.is_admin ?? existingUserResult.is_admin,
+			};
+
+			await db
+				.prepare(
+					`UPDATE users SET name = ?, email = ?, password = ?, is_admin = ? WHERE id = ?`,
+				)
+				.bind(
+					userToUpdate.name,
+					userToUpdate.email,
+					userToUpdate.password,
+					userToUpdate.is_admin,
+					userToUpdate.id,
+				)
+				.run();
+
 			return new Response(JSON.stringify({ success: true }), {
 				headers: { "Content-Type": "application/json" },
 			});
@@ -672,6 +697,35 @@ router.add("GET", "/quizzes", async (_request, env) => {
 	}
 });
 
+router.add("GET", "/quiz/question/count", async (_request, env) => {
+	try {
+		const db = getDB(env);
+
+		const quiz = new Quiz();
+		const quizzes = await quiz.loadAll(db);
+
+		const question = new Question();
+		const allQuestions = await question.loadAll(db);
+
+		const quizCounts = quizzes.map((q) => {
+			const count = allQuestions.filter((ques) => ques.quiz_id === q.id).length;
+			return {
+				...q,
+				question_count: count,
+			};
+		});
+
+		return new Response(
+			JSON.stringify({ success: true, quizzes: quizCounts }),
+			{
+				headers: { "Content-Type": "application/json" },
+			},
+		);
+	} catch (e) {
+		return new Response(`Error: ${e.message}`, { status: 500 });
+	}
+});
+
 // QUESTION
 router.add("GET", "/question", async (request, env) => {
 	try {
@@ -713,12 +767,24 @@ router.add("DELETE", "/question", (request, env) =>
 	withAuth(request, env, async (request, env) => {
 		try {
 			const db = getDB(env);
+
 			if (!(await verifyAdmin(db, request.user))) {
 				return new Response("Unauthorized", { status: 401 });
 			}
+
 			const { id } = await request.json();
+			if (!id) return new Response("Missing question id", { status: 400 });
+
 			const question = new Question({ id });
 			await question.delete(db);
+
+			const option = new Option();
+			const options = await option.loadFromQuestion(db, id);
+			for (const opt of options) {
+				const o = new Option({ id: opt.id });
+				await o.delete(db);
+			}
+
 			return new Response(JSON.stringify({ success: true }), {
 				headers: { "Content-Type": "application/json" },
 			});

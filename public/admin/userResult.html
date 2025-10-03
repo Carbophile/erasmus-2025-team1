@@ -10,131 +10,210 @@
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 		/>
-		<title>Admin</title>
+		<title>Admin - User Results</title>
 	</head>
+	<body>
+		<aside class="sidebar">
+			<div class="logo">QuizBattle</div>
+			<nav>
+				<a href="/admin/users" class="active"
+					><i class="fa-solid fa-users"></i><span>Users</span></a
+				>
+				<a href="/admin/questions"
+					><i class="fa-solid fa-question"></i><span>Questions</span></a
+				>
+				<a href="/admin/quizzes"
+					><i class="fa-solid fa-file-circle-question"></i
+					><span>Quizzes</span></a
+				>
+				<a href="/admin/categories"
+					><i class="fa-solid fa-icons"></i><span>Categories</span></a
+				>
+			</nav>
+		</aside>
 
-</head>
-<body>
-	<aside class="sidebar">
-  
-		<div class="logo">QuizBattle</div>
-		<nav>
-			<a href="/admin/users" class="active"><i class="fa-solid fa-users"></i><span>Users</span></a>
-			<a href="/admin/questions"><i class="fa-solid fa-question"></i><span>Questions</span></a>
-		</nav>
-	</aside>
-	<div class="main">
-		<header class="topbar">
-			<div class="nav-left">
-				<a href="../index.html"><button class="btn" onclick="window.location.href='index.html'">Home</button></a>
-				<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
-			</div>
-			<div class="search-box">
+		<div class="main">
+			<header class="topbar">
+				<div class="nav-left">
+					<a href="../index.html"><button class="btn">Home</button></a>
+					<a href="../leadeboard/lista.html"
+						><button class="btn">Leaderboard</button></a
+					>
+				</div>
+				<div class="search-box">
 					<input type="text" placeholder="Search..." />
 					<i class="fa fa-search"></i>
 				</div>
-			<div class="nav-right">
-					<a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
-			</div>
-		</header>
+				<div class="nav-right">
+					<a href="../profil/profil.html"
+						><i class="fa-solid fa-user user-icon"></i
+					></a>
+				</div>
+			</header>
 
-		<section class="table-section">
-			<div class="table-header">
-				<h2 id="results-title">User Results</h2>
-			</div>
-			<div class="table-container">
-				<table>
-					<thead>
-						<tr>
-							<th>Result Id</th>
-							<th>Score</th>
-							<th>Time Taken</th>
-							<th>Quiz Id</th>
-							<th>Date</th>
-							<th>Delete</th>
-						</tr>
-					</thead>
-					<tbody id="results-table-body">
-						<!-- Filled dynamically -->
-					</tbody>
-				</table>
-			</div>
-		</section>
-	</div>
-	<!-- ✅ Delete confirmation overlay -->
-	<div class="overlay" id="delete-overlay">
-		<div class="overlay-content">
-			<h3>Delete Result</h3>
-			<p>Are you sure you want to delete this result?</p>
-			<button class="confirm-btn" id="confirm-delete">Delete</button>
-			<button class="cancel-btn" onclick="closeDeleteOverlay()">Cancel</button>
+			<section class="table-section">
+				<div class="table-header">
+					<h2 id="results-title">User Results</h2>
+				</div>
+				<div class="table-container">
+					<table>
+						<thead>
+							<tr>
+								<th>Id</th>
+								<th>Score</th>
+								<th>Time Taken</th>
+								<th>Quiz</th>
+								<th>Date</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody id="results-table-body"></tbody>
+					</table>
+				</div>
+			</section>
 		</div>
-	</div>
 
-	<script>
-		const users = {
-			1: { id: 1, name: "Alice Johnson" },
-			2: { id: 2, name: "Bob Smith" },
-			3: { id: 3, name: "Charlie Lee" },
-			4: { id: 4, name: "Diana Prince" }
-		};
-		const allResults = {
-			1: [
-				{ id: 101, score: 85, time: "02:30", quizId: 1, date: "2025-09-20" },
-				{ id: 102, score: 92, time: "01:50", quizId: 2, date: "2025-09-21" }
-			],
-			2: [
-				{ id: 201, score: 76, time: "03:10", quizId: 1, date: "2025-09-19" }
-			],
-			3: [
-				{ id: 301, score: 65, time: "04:05", quizId: 3, date: "2025-09-22" }
-			],
-			4: []
-		};
-		const params = new URLSearchParams(window.location.search);
-		const userId = params.get("id");
-		const resultsTable = document.getElementById("results-table-body");
-		const resultsTitle = document.getElementById("results-title");
-		if (userId && users[userId]) {
-			resultsTitle.textContent = `Results for ${users[userId].name}`;
-		}
-		// Render results
-		if (userId && allResults[userId] && allResults[userId].length > 0) {
-			allResults[userId].forEach(res => {
-				const row = document.createElement("tr");
-				row.innerHTML = `
-					<td>${res.id}</td>
-					<td>${res.score}</td>
-					<td>${res.time}</td>
-					<td>${res.quizId}</td>
-					<td>${res.date}</td>
-					<td><button class="icon-btn danger" onclick="openDeleteOverlay(${userId}, ${res.id}, this)"><i class="fa fa-trash"></i></button></td>
-				`;
-				resultsTable.appendChild(row);
+		<div class="overlay" id="delete-overlay" style="display: none">
+			<div class="overlay-content">
+				<h3>Delete Result</h3>
+				<p>Are you sure you want to delete this result?</p>
+				<button class="confirm-btn" id="confirm-delete">Delete</button>
+				<button class="cancel-btn" id="cancel-delete">Cancel</button>
+			</div>
+		</div>
+
+		<script>
+			document.addEventListener("DOMContentLoaded", async () => {
+				const params = new URLSearchParams(window.location.search);
+				const userId = params.get("id");
+				const resultsTable = document.getElementById("results-table-body");
+				const resultsTitle = document.getElementById("results-title");
+				const token = localStorage.getItem("token");
+
+				if (!userId) {
+					resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">User ID missing</td></tr>`;
+					return;
+				}
+
+				// Fetch user info
+				let userName = `User ${userId}`;
+				try {
+					const userRes = await fetch(`/user?id=${userId}`, {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (userRes.ok) {
+						const userData = await userRes.json();
+						userName = userData.name || userName;
+					}
+				} catch (err) {
+					console.error("Error fetching user:", err);
+				}
+				resultsTitle.textContent = `Results for ${userName}`;
+
+				// Fetch all quizzes
+				let quizMap = {};
+				try {
+					const quizRes = await fetch("/quizzes", {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (quizRes.ok) {
+						const quizData = await quizRes.json();
+						if (quizData.success && Array.isArray(quizData.quizzes)) {
+							quizMap = quizData.quizzes.reduce((map, q) => {
+								map[q.id] = q.name;
+								return map;
+							}, {});
+						}
+					}
+				} catch (err) {
+					console.error("Error fetching quizzes:", err);
+				}
+
+				// Fetch user results
+				let allResults = [];
+				try {
+					const res = await fetch(`/result?user_id=${userId}`, {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (!res.ok) throw new Error("Failed to fetch results");
+					allResults = await res.json();
+				} catch (err) {
+					console.error(err);
+					resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error loading results</td></tr>`;
+				}
+
+				function renderResults() {
+					if (!allResults.length) {
+						resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results found for this user.</td></tr>`;
+						return;
+					}
+
+					resultsTable.innerHTML = "";
+					allResults.forEach((result) => {
+						const quizName =
+							quizMap[result.quiz_id] || `Quiz ${result.quiz_id}`;
+						const row = document.createElement("tr");
+						row.innerHTML = `
+                <td>${result.score}</td>
+                <td>${result.time_taken}</td>
+                <td>${quizName}</td>
+                <td>${new Date(result.create_date).toLocaleString()}</td>
+                <td><button class="icon-btn danger" onclick="openDeleteOverlay(${
+									result.id
+								}, this)"><i class="fa fa-trash"></i></button></td>
+            `;
+						resultsTable.appendChild(row);
+					});
+				}
+
+				renderResults();
+
+				const overlay = document.getElementById("delete-overlay");
+				const confirmBtn = document.getElementById("confirm-delete");
+				const cancelBtn = document.getElementById("cancel-delete");
+				let deleteTarget = null;
+
+				window.openDeleteOverlay = (resultId, btn) => {
+					deleteTarget = { resultId, row: btn.closest("tr") };
+					overlay.style.display = "flex";
+				};
+
+				const closeOverlay = () => {
+					deleteTarget = null;
+					overlay.style.display = "none";
+				};
+
+				cancelBtn.addEventListener("click", closeOverlay);
+
+				confirmBtn.addEventListener("click", async () => {
+					if (!deleteTarget) return;
+					try {
+						const res = await fetch("/result", {
+							method: "DELETE",
+							headers: {
+								Authorization: `Bearer ${token}`,
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({ id: deleteTarget.resultId }),
+						});
+						const data = await res.json();
+						if (data.success) {
+							allResults = allResults.filter(
+								(r) => r.id !== deleteTarget.resultId
+							);
+							deleteTarget.row.remove();
+							renderResults();
+						} else {
+							alert("Delete failed");
+						}
+					} catch (err) {
+						console.error(err);
+						alert("Delete failed");
+					} finally {
+						closeOverlay();
+					}
+				});
 			});
-		} else {
-			resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results found for this user.</td></tr>`;
-		}
-		// ✅ Delete overlay logic
-		let deleteTarget = null; // will store {userId, resultId, row}
-		function openDeleteOverlay(userId, resultId, btn) {
-			deleteTarget = { userId, resultId, row: btn.closest("tr") };
-			document.getElementById("delete-overlay").style.display = "flex";
-		}
-		function closeDeleteOverlay() {
-			deleteTarget = null;
-			document.getElementById("delete-overlay").style.display = "none";
-		}
-		document.getElementById("confirm-delete").onclick = function() {
-			if (!deleteTarget) return;
-			const { userId, resultId, row } = deleteTarget;
-			allResults[userId] = allResults[userId].filter(r => r.id !== resultId);
-			row.remove();
-			if (allResults[userId].length === 0) {
-				resultsTable.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#888;">No results left for this user.</td></tr>`;
-			}
-			closeDeleteOverlay();
-		};
-	</script>
-</body>
+		</script>
+	</body>
 </html>

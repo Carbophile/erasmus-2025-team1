@@ -3,6 +3,7 @@
 	padding: 0;
 	box-sizing: border-box;
 }
+
 body {
 	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 	height: 100vh;
@@ -10,6 +11,7 @@ body {
 	background: #f3f2ec;
 	color: #333;
 }
+
 .sidebar {
 	width: 220px;
 	background: #1c6ba0;
@@ -18,16 +20,32 @@ body {
 	flex-direction: column;
 	padding: 20px 10px;
 }
+
 .sidebar .logo {
 	font-size: 1.6em;
 	font-weight: bold;
 	margin-bottom: 30px;
 	text-align: center;
 }
+
 .sidebar nav {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+.reset-btn {
+	background-color: #f39c12;
+	color: white;
+	border: none;
+	padding: 6px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 0.9em;
+}
+
+.reset-btn:hover {
+	background-color: #e67e22;
 }
 
 a.btn {
@@ -37,9 +55,11 @@ a.btn {
 	padding: 6px 10px;
 	border-radius: 6px;
 }
+
 a.btn:hover {
 	text-decoration: none;
 }
+
 .sidebar nav a {
 	display: flex;
 	align-items: center;
@@ -50,10 +70,12 @@ a.btn:hover {
 	text-decoration: none;
 	transition: background 0.3s;
 }
+
 .sidebar nav a:hover,
 .sidebar nav a.active {
 	background: rgba(255, 255, 255, 0.2);
 }
+
 .main {
 	flex: 1;
 	display: flex;
@@ -61,6 +83,7 @@ a.btn:hover {
 	height: 100vh;
 	overflow: hidden;
 }
+
 .topbar {
 	display: flex;
 	justify-content: space-between;
@@ -69,6 +92,7 @@ a.btn:hover {
 	background: white;
 	border-bottom: 1px solid #ddd;
 }
+
 .btn {
 	background: #1c6ba0;
 	border: none;
@@ -79,19 +103,24 @@ a.btn:hover {
 	margin-right: 8px;
 	transition: background 0.3s;
 }
+
 .btn:hover {
 	background: #15567d;
 }
+
 .add-btn {
 	background: #1c6ba0;
 }
+
 .add-btn:hover {
 	background: #15567d;
 }
+
 .btn.small {
 	padding: 4px 10px;
 	font-size: 0.85em;
 }
+
 .icon-btn {
 	background: transparent;
 	border: none;
@@ -99,9 +128,11 @@ a.btn:hover {
 	font-size: 1em;
 	color: #1c6ba0;
 }
+
 .icon-btn.danger {
 	color: #e62727;
 }
+
 .search-box {
 	display: flex;
 	align-items: center;
@@ -109,17 +140,24 @@ a.btn:hover {
 	padding: 5px 10px;
 	border-radius: 20px;
 }
+
+.btn i {
+	margin-left: 4px;
+}
+
 .search-box input {
 	border: none;
 	background: transparent;
 	outline: none;
 	margin-right: 5px;
 }
+
 .user-icon {
 	font-size: 1.3em;
 	margin-left: 15px;
 	color: #1c6ba0;
 }
+
 .table-section {
 	flex: 1;
 	display: flex;
@@ -127,12 +165,14 @@ a.btn:hover {
 	padding: 20px;
 	overflow: hidden;
 }
+
 .table-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 15px;
 }
+
 .table-container {
 	flex: 1;
 	overflow-y: auto;
@@ -140,29 +180,35 @@ a.btn:hover {
 	background: white;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+
 table {
 	width: 100%;
 	border-collapse: collapse;
 }
+
 thead {
 	background: #1c6ba0;
 	color: #f3f2ec;
 }
+
 th,
 td {
 	padding: 12px 10px;
 	text-align: left;
 	border-bottom: 1px solid #ddd;
 }
+
 tbody tr:hover {
 	background: #f9f9f9;
 }
+
 .pagination {
 	display: flex;
 	justify-content: center;
 	margin-top: 15px;
 	flex-wrap: wrap;
 }
+
 .pagination button {
 	background: #f3f2ec;
 	border: 1px solid #ccc;
@@ -172,30 +218,37 @@ tbody tr:hover {
 	cursor: pointer;
 	transition: background 0.2s;
 }
+
 .pagination button:hover {
 	background: #ddd;
 }
+
 .pagination .active {
 	background: #1c6ba0;
 	color: #f3f2ec;
 	border: none;
 }
+
 /* Responsive */
 @media (max-width: 768px) {
 	.sidebar {
 		width: 60px;
 		padding: 10px;
 	}
+
 	.sidebar nav a span {
 		display: none;
 	}
+
 	.sidebar nav a {
 		justify-content: center;
 	}
+
 	table {
 		font-size: 0.9em;
 	}
 }
+
 .overlay {
 	position: fixed;
 	top: 0;
@@ -208,6 +261,7 @@ tbody tr:hover {
 	align-items: center;
 	z-index: 1000;
 }
+
 .card {
 	background: #fff;
 	border-radius: 12px;
@@ -216,26 +270,31 @@ tbody tr:hover {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 	animation: fadeIn 0.3s ease-in-out;
 }
+
 .card h3 {
 	margin-top: 0;
 	font-size: 18px;
 }
+
 .options-list {
 	list-style: none;
 	padding: 0;
 	margin: 10px 0;
 }
+
 .options-list li {
 	padding: 8px;
 	border: 1px solid #ddd;
 	border-radius: 8px;
 	margin-bottom: 8px;
 }
+
 .options-list li.correct {
 	background: #d1ffd6;
 	border-color: #28a745;
 	font-weight: bold;
 }
+
 .close-btn {
 	display: block;
 	margin-top: 15px;
@@ -249,9 +308,11 @@ tbody tr:hover {
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .close-btn:hover {
 	background: #dc2626;
 }
+
 .cancel-btn {
 	display: block;
 	margin-top: 15px;
@@ -265,9 +326,11 @@ tbody tr:hover {
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .cancel-btn:hover {
 	background: #1e3a8a;
 }
+
 .confirm-btn {
 	display: block;
 	margin-top: 15px;
@@ -281,21 +344,26 @@ tbody tr:hover {
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .confirm-btn:hover {
 	background: #c82333;
 }
+
 .button-row {
 	display: flex;
 	justify-content: space-between;
 	gap: 10px;
 }
+
 .form-group {
 	margin-bottom: 10px;
 }
+
 .form-group label {
 	display: block;
 	margin-bottom: 5px;
 }
+
 .form-group input,
 .form-group select {
 	width: 100%;
@@ -305,12 +373,14 @@ tbody tr:hover {
 	font-size: 14px;
 	background: #fff;
 }
+
 .form-group select:focus,
 .form-group input:focus {
 	outline: none;
 	border-color: #28a745;
 	box-shadow: 0 0 4px rgba(40, 167, 69, 0.4);
 }
+
 .submit-btn {
 	background: #28a745;
 	color: #fff;
@@ -323,14 +393,17 @@ tbody tr:hover {
 	font-size: 14px;
 	transition: background 0.2s ease-in-out;
 }
+
 .submit-btn:hover {
 	background: #15803d;
 }
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
 		transform: scale(0.9);
 	}
+
 	to {
 		opacity: 1;
 		transform: scale(1);
