@@ -29,10 +29,6 @@ body {
 	overflow: hidden;
 }
 
-.container.active body {
-	background: linear-gradient(90deg, #ff76ce, #94ffd8);
-}
-
 .container h1 {
 	font-size: 36px;
 	margin: -10px 0;
@@ -52,24 +48,30 @@ form {
 	right: 0;
 	width: 50%;
 	height: 100%;
+	background: #fff; /* ensure solid background like original */
 	display: flex;
 	align-items: center;
 	color: #333;
 	text-align: center;
 	padding: 40px;
 	z-index: 1;
+	/* Restore original timing: wait for panels to slide before form shifts visibility */
 	transition:
-		0.6s ease-in-out,
+		0.6s ease-in-out 1.2s,
+		visibility 0s 1s,
 		background 1s ease;
 }
 
-.container.active .form-box.register {
+/* Shift BOTH forms together on active for proper animation */
+.container.active .form-box {
 	right: 50%;
-	visibility: visible;
 }
 
 .form-box.register {
 	visibility: hidden;
+}
+.container.active .form-box.register {
+	visibility: visible;
 }
 
 .input-box {
@@ -105,7 +107,6 @@ form {
 .forgot-link {
 	margin: -15px 0 15px;
 }
-
 .forgot-link a {
 	font-size: 14.5px;
 	color: #333;
@@ -133,7 +134,6 @@ form {
 	display: flex;
 	justify-content: center;
 }
-
 .social-icons a {
 	display: inline-flex;
 	padding: 10px;
@@ -184,7 +184,6 @@ form {
 	left: 0;
 	transition-delay: 1.2s;
 }
-
 .container.active .toggle-panel.toggle-left {
 	left: -50%;
 	transition-delay: 0.6s;
@@ -194,7 +193,6 @@ form {
 	right: -50%;
 	transition-delay: 0.6s;
 }
-
 .container.active .toggle-panel.toggle-right {
 	right: 0;
 	transition-delay: 1.2s;
@@ -203,7 +201,6 @@ form {
 .toggle-panel p {
 	margin-bottom: 20px;
 }
-
 .toggle-panel .btn {
 	width: 160px;
 	height: 46px;
@@ -221,8 +218,12 @@ form {
 		bottom: 0;
 		width: 100%;
 		height: 70%;
+		right: 0;
+		transition:
+			0.6s ease-in-out,
+			visibility 0s 0s;
 	}
-
+	/* On mobile, slide vertically instead of horizontal */
 	.container.active .form-box {
 		right: 0;
 		bottom: 30%;
@@ -235,31 +236,29 @@ form {
 		height: 300%;
 		border-radius: 20vw;
 	}
-
 	.container.active .toggle-box::before {
 		left: 0;
 		top: 70%;
-	}
-
-	.container.active .toggle-panel.toggle-left {
-		left: 0;
-		top: -30%;
 	}
 
 	.toggle-panel {
 		width: 100%;
 		height: 30%;
 	}
-
 	.toggle-panel.toggle-left {
 		top: 0;
+		left: 0;
+		transition-delay: 0.3s;
+	}
+	.container.active .toggle-panel.toggle-left {
+		top: -30%;
+		left: 0;
 	}
 
 	.toggle-panel.toggle-right {
 		right: 0;
 		bottom: -30%;
 	}
-
 	.container.active .toggle-panel.toggle-right {
 		bottom: 0;
 	}
@@ -269,7 +268,6 @@ form {
 	.form-box {
 		padding: 20px;
 	}
-
 	.toggle-panel h1 {
 		font-size: 30px;
 	}
