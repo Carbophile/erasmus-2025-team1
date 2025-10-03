@@ -1,80 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<title>QuizBattle Admin - Questions</title>
-		<link rel="stylesheet" href="../admin/css/general.css" />
-		<link rel="stylesheet" href="../admin/css/questions.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-		/>
-	</head>
-	<body>
-		<aside class="sidebar">
-			<div class="logo">QuizBattle</div>
-			<nav>
-				<a href="/admin/users"
-					><i class="fa-solid fa-users"></i><span>Users</span></a
-				>
-				<a href="/admin/questions" class="active"
-					><i class="fa-solid fa-question"></i><span>Questions</span></a
-				>
-				<a href="/admin/quizzes"
-					><i class="fa-solid fa-file-circle-question"></i
-					><span>Quizzes</span></a
-				>
-				<a href="/admin/categories"
-					><i class="fa-solid fa-icons"></i><span>Categories</span></a
-				>
-			</nav>
-		</aside>
+<head>
+	<meta charset="utf-8" />
+	<title>QuizBattle Admin - Questions</title>
+	<link rel="stylesheet" href="../admin/css/general.css" />
+	<link rel="stylesheet" href="../admin/css/questions.css" />
+	<link
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+	/>
+</head>
+<body>
+	<aside class="sidebar">
+		<div class="logo">QuizBattle</div>
+		<nav>
+			<a href="/admin/users"><i class="fa-solid fa-users"></i><span>Users</span></a>
+			<a href="/admin/questions" class="active"><i class="fa-solid fa-question"></i><span>Questions</span></a>
+			<a href="/admin/quizzes"><i class="fa-solid fa-file-circle-question"></i><span>Quizzes</span></a>
+			<a href="/admin/categories"><i class="fa-solid fa-icons"></i><span>Categories</span></a>
+		</nav>
+	</aside>
 
-		<div class="main">
-			<header class="topbar">
-				<div class="nav-left">
-					<a href="../index.html"><button class="btn">Home</button></a>
-					<a href="../leadeboard/lista.html"
-						><button class="btn">Leaderboard</button></a
-					>
-				</div>
-				<div class="search-box">
-					<input type="text" placeholder="Search..." />
-					<i class="fa fa-search"></i>
-				</div>
-				<div class="nav-right">
-					<a href="../profil/profil.html"
-						><i class="fa-solid fa-user user-icon"></i
-					></a>
-				</div>
-			</header>
+	<div class="main">
+		<header class="topbar">
+			<div class="nav-left">
+				<a href="../index.html"><button class="btn">Home</button></a>
+				<a href="../leadeboard/lista.html"><button class="btn">Leaderboard</button></a>
+			</div>
+			<div class="search-box">
+				<input type="text" placeholder="Search..." />
+				<i class="fa fa-search"></i>
+			</div>
+			<div class="nav-right">
+				<a href="../profil/profil.html"><i class="fa-solid fa-user user-icon"></i></a>
+			</div>
+		</header>
 
-			<section class="table-section">
-				<div class="table-header">
-					<h2>Questions</h2>
+		<section class="table-section">
+			<div class="table-header">
+				<h2>Questions</h2>
+				<div class="header-actions">
+					<div class="filters">
+						<label>
+							Category:
+							<select id="filter-category">
+								<option value="">All Categories</option>
+							</select>
+						</label>
+						<label>
+							Country:
+							<select id="filter-country">
+								<option value="">All Countries</option>
+								<option value="0">HR</option>
+								<option value="1">NL</option>
+							</select>
+						</label>
+					</div>
 					<button class="btn add-btn" onclick="openFormForCreate()">
 						<i class="fa fa-plus"></i> Add
 					</button>
 				</div>
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Id</th>
-								<th>Question</th>
-								<th>Options</th>
-								<th>Category</th>
-								<th>Country</th>
-								<th>Quiz</th>
-								<th>Edit</th>
-								<th>Delete</th>
-							</tr>
-						</thead>
-						<tbody id="questions-table-body"></tbody>
-					</table>
-				</div>
-			</section>
-		</div>
+			</div>
+
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Id</th>
+							<th>Question</th>
+							<th>Options</th>
+							<th>Category</th>
+							<th>Country</th>
+							<th>Quiz</th>
+							<th>Edit</th>
+							<th>Delete</th>
+						</tr>
+					</thead>
+					<tbody id="questions-table-body"></tbody>
+				</table>
+			</div>
+		</section>
+	</div>
+
 
 		<!-- Show Answers Overlay -->
 		<div class="overlay" id="view-overlay">
@@ -188,6 +195,8 @@
 			const form = document.getElementById("question-form");
 			const formTitle = document.getElementById("form-title");
 			const errorBox = document.getElementById("form-error");
+			const categoryFilter = document.getElementById("filter-category");
+			const countryFilter = document.getElementById("filter-country");
 
 			let allQuestions = [];
 			let allCategories = [];
@@ -220,12 +229,19 @@
 					if (data && data.success && Array.isArray(data.categories)) {
 						allCategories = data.categories;
 						const select = document.getElementById("category-select");
-						select.innerHTML = "";
+						const filterSelect = document.getElementById("filter-category");
+						select.innerHTML = '<option value="">Select</option>';
+						filterSelect.innerHTML = '<option value="">All Categories</option>';
 						allCategories.forEach((cat) => {
-							const opt = document.createElement("option");
-							opt.value = cat.id;
-							opt.textContent = cat.name;
-							select.appendChild(opt);
+							const opt1 = document.createElement("option");
+							opt1.value = cat.id;
+							opt1.textContent = cat.name;
+							select.appendChild(opt1);
+
+							const opt2 = document.createElement("option");
+							opt2.value = cat.id;
+							opt2.textContent = cat.name;
+							filterSelect.appendChild(opt2);
 						});
 					}
 				} catch (err) {
@@ -257,36 +273,10 @@
 				const cat = allCategories.find((c) => c.id === id);
 				return cat ? cat.name : id ?? "-";
 			}
-
 			function quizNameById(id) {
 				const quiz = allQuizzes.find((q) => q.id === id);
 				return quiz ? quiz.name : id ?? "-";
 			}
-
-			function renderTable() {
-				tableBody.innerHTML = "";
-				if (!allQuestions.length) {
-					tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#888">No questions found</td></tr>`;
-					return;
-				}
-				allQuestions.forEach((q) => {
-					const row = document.createElement("tr");
-					row.innerHTML = `
-      <td>${q.id}</td>
-      <td>${escapeHtml(q.text)}</td>
-      <td><button class="btn small" onclick="showAnswers(${
-				q.id
-			})">Show<i class="fa fa-solid fa-eye "></i></button></td>
-      <td>${escapeHtml(categoryNameById(q.category_id))}</td>
-      <td>${q.country === 0 ? "HR" : q.country === 1 ? "NL" : q.country}</td>
-      <td>${escapeHtml(quizNameById(q.quiz_id))}</td>
-      <td><button class="icon-btn" onclick="openFormForEdit(${q.id})">
-		<i class="fa fa-pen"></i></button>
-      </td>
-      <td><button class="icon-btn danger" onclick="openDelete(${q.id})"><i class="fa fa-trash"></i></button></td>`;
-	  tableBody.appendChild(row);
-	});
-}
 
 			function escapeHtml(s) {
 				if (!s && s !== 0) return "";
@@ -302,6 +292,53 @@
 						}[c])
 				);
 			}
+
+			function renderTable() {
+				tableBody.innerHTML = "";
+				let filtered = allQuestions.slice();
+				const catId = categoryFilter.value;
+				const countryVal = countryFilter.value;
+
+				if (catId) filtered = filtered.filter((q) => q.category_id == catId);
+				if (countryVal)
+					filtered = filtered.filter((q) => String(q.country) === countryVal);
+
+				if (!filtered.length) {
+					tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#888">No questions found</td></tr>`;
+					return;
+				}
+
+				filtered.forEach((q) => {
+					const row = document.createElement("tr");
+					row.innerHTML = `
+      <td>${q.id}</td>
+      <td>${escapeHtml(q.text)}</td>
+      <td><button class="btn small" onclick="showAnswers(${
+				q.id
+			})">Show<i class="fa fa-solid fa-eye"></i></button></td>
+      <td>${escapeHtml(categoryNameById(q.category_id))}</td>
+      <td>${q.country === 0 ? "HR" : q.country === 1 ? "NL" : q.country}</td>
+      <td>${escapeHtml(quizNameById(q.quiz_id))}</td>
+      <td><button class="icon-btn" onclick="openFormForEdit(${
+				q.id
+			})"><i class="fa fa-pen"></i></button></td>
+      <td><button class="icon-btn danger" onclick="openDelete(${
+				q.id
+			})"><i class="fa fa-trash"></i></button></td>`;
+					tableBody.appendChild(row);
+				});
+			}
+
+			// Filter listeners
+			categoryFilter.addEventListener("change", renderTable);
+			countryFilter.addEventListener("change", renderTable);
+
+			// DOMContentLoaded
+			document.addEventListener("DOMContentLoaded", async () => {
+				await fetchCategories();
+				await fetchQuizzes();
+				await fetchQuestions();
+			});
 
 			async function showAnswers(questionId) {
 				try {
@@ -389,7 +426,7 @@
 
 			form.addEventListener("submit", async (e) => {
 				e.preventDefault();
-				errorBox.textContent = ""; 
+				errorBox.textContent = "";
 				const fd = Object.fromEntries(new FormData(form).entries());
 				const questionText = fd.question.trim();
 				const quizId = Number(fd.quizId);

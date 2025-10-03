@@ -43,8 +43,7 @@
     <table>
       <thead>
         <tr>
-          <th>Id</th>
-          <th>Name</th>
+          <th>Quiz</th>
           <th>Score Needed</th>
           <th>Max Time (s)</th>
           <th>Questions</th>
@@ -139,7 +138,6 @@ function renderTable() {
   allQuizzes.forEach(q => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${q.id}</td>
       <td>${q.name}</td>
       <td>${q.score_needed}</td>
       <td>${q.max_time}</td>

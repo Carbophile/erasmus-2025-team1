@@ -148,12 +148,55 @@
 	font-size: 0.9em;
 	margin-top: 4px;
 }
+
 .btn i {
 	margin-left: 4px;
 }
 
 .submit-btn:hover {
 	background: #15803d;
+}
+
+.table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.table-header h2 {
+	margin: 0;
+	font-size: 1.4rem;
+}
+
+.header-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.filters {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.filters label {
+	font-size: 0.9rem;
+	color: #333;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.filters select {
+	padding: 4px 8px;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	background-color: #fff;
 }
 
 @keyframes fadeIn {
